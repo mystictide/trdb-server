@@ -1,11 +1,22 @@
+using Newtonsoft.Json.Serialization;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
+//JSON Serializer
+builder.Services.AddControllersWithViews().AddNewtonsoftJson(options =>
+options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore)
+    .AddNewtonsoftJson(options => options.SerializerSettings.ContractResolver
+    = new DefaultContractResolver());
 builder.Services.AddSwaggerGen();
+builder.Services.AddControllers();
+builder.Services.AddCors(c =>
+{
+    c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
+builder.Services.AddMvcCore();
 
 var app = builder.Build();
 
@@ -19,6 +30,10 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseRouting();
+
+app.UseCors("trdb");
 
 app.MapControllers();
 
