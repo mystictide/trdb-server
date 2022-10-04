@@ -16,9 +16,4 @@
     <ProjectReference Include="..\trdb.entity\trdb.entity.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Interface\" />
-    <Folder Include="Repo\" />
-  </ItemGroup>
-
 </Project>

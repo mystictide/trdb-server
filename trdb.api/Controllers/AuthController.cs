@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using trdb.business.Users;
 using trdb.entity.Users;
 
 namespace trdb.api.Controllers
@@ -25,6 +26,7 @@ namespace trdb.api.Controllers
         [Route("login")]
         public async Task<string> Login([FromBody] Users user)
         {
+            await new UserManager().Login(user.Email);
             return "success";
         }
     }

@@ -3,7 +3,7 @@ using System.Data;
 
 namespace trdb.data.Connection
 {
-    internal class dbConnectionExample
+    public class dbConnectionExample
     {
         private static string? connectionString { get; set; }
 
