@@ -15,19 +15,64 @@ namespace trdb.api.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("register")]
-        public string Register()
+        public async Task<IActionResult> Register([FromBody] Users user)
         {
-            return "success";
+            try
+            {
+                var userData = await new UserManager().Register(user);
+                return Ok(userData);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpPost]
         [Route("login")]
-        public async Task<string> Login([FromBody] Users user)
+        public async Task<IActionResult> Login([FromBody] Users user)
         {
-            await new UserManager().Login(user.Email);
-            return "success";
+            try
+            {
+                var userData = await new UserManager().Login(user);
+                return Ok(userData);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("cmail")]
+        public async Task<IActionResult> CheckExistingEmail([FromBody] string email)
+        {
+            try
+            {
+                var exists = await new UserManager().CheckEmail(email);
+                return Ok(exists);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("cusername")]
+        public async Task<IActionResult> checkExistingUsername([FromBody] string username)
+        {
+            try
+            {
+                var exists = await new UserManager().CheckUsername(username);
+                return Ok(exists);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }

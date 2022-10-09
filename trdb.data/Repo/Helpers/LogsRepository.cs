@@ -7,13 +7,13 @@ namespace trdb.data.Repo.Helpers
 {
     public class LogsRepository : Connection.dbConnection, ILogs
     {
-        public int Add(Logs entity)
+        public async Task<int> Add(Logs entity)
         {
             try
             {
                 using (var con = GetConnection)
                 {
-                    return (int)con.Insert(entity);
+                    return await con.InsertAsync(entity);
                 }
             }
             catch (Exception exception)
@@ -22,16 +22,16 @@ namespace trdb.data.Repo.Helpers
                 return 0;
             }
         }
-        public static void CreateLog(Exception ex, int UserId = 0)
+        public async static void CreateLog(Exception ex, int UserId = 0)
         {
             try
             {
                 var st = new StackTrace(ex, true);
                 if (st != null)
                 {
-                    st.GetFrames().Where(k => k.GetFileLineNumber() > 0).ToList().ForEach(k =>
+                    st.GetFrames().Where(k => k.GetFileLineNumber() > 0).ToList().ForEach(async k =>
                     {
-                        new LogsRepository().Add(new Logs()
+                        await new LogsRepository().Add(new Logs()
                         {
                             CreatedDate = DateTime.Now,
                             UserID = UserId,
@@ -43,7 +43,7 @@ namespace trdb.data.Repo.Helpers
                 }
                 else
                 {
-                    new LogsRepository().Add(new Logs()
+                    await new LogsRepository().Add(new Logs()
                     {
                         CreatedDate = DateTime.Now,
                         UserID = UserId,
@@ -55,7 +55,7 @@ namespace trdb.data.Repo.Helpers
             }
             catch (Exception exception)
             {
-                new LogsRepository().Add(new Logs()
+                await new LogsRepository().Add(new Logs()
                 {
                     CreatedDate = DateTime.Now,
                     UserID = 0,
@@ -64,8 +64,6 @@ namespace trdb.data.Repo.Helpers
                     Line = 0
                 });
             }
-
-
         }
     }
 }

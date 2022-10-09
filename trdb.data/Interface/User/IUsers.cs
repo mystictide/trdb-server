@@ -7,8 +7,8 @@ namespace trdb.data.Interface.User
     {
         Task<bool> CheckEmail(string Email);
         Task<bool> CheckUsername(string Username);
-        Task<Users>? Login(string Email);
-        Task<ProcessResult> Register(Users entity);
+        Task<Users>? Login(Users entity);
+        Task<Users>? Register(Users entity);
         Task<ProcessResult> Update(Users entity);
         Task<ProcessResult> Delete(int ID);
         Task<Users>? Get(int ID);

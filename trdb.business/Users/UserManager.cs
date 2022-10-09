@@ -1,4 +1,8 @@
-﻿using trdb.data.Interface.User;
+﻿using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using trdb.data.Interface.User;
 using trdb.data.Repo.User;
 using trdb.entity.Helpers;
 
@@ -12,9 +16,82 @@ namespace trdb.business.Users
             _repo = new UserRepository();
         }
 
-        public async Task<ProcessResult> Register(entity.Users.Users entity)
+        private string generateToken(entity.Users.Users user)
         {
-            return await _repo.Register(entity);
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(AppSettings.Secret);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[] {
+                    new Claim("id", user.ID.ToString()),
+                    new Claim("authType", user.AuthType.ToString())
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+
+        public async Task<entity.Users.Users>? Register(entity.Users.Users entity)
+        {
+            if (entity.Username == null || entity.Email == null || entity.Password == null)
+            {
+                throw new Exception("User information missing");
+            }
+
+            bool userExists = await CheckEmail(entity.Email);
+            if (userExists)
+            {
+                throw new Exception("Email address already registered");
+            }
+
+            bool usernameExists = await CheckUsername(entity.Username);
+            if (usernameExists)
+            {
+                throw new Exception("Username already exists");
+            }
+
+            var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(entity.Password, salt);
+            entity.Password = hashedPassword;
+            entity.AuthType = 3;
+            entity.IsActive = true;
+
+            var result = await _repo.Register(entity);
+            if (result != null)
+            {
+                result.Email = entity.Email;
+                result.Username = entity.Username;
+                result.AuthType = entity.AuthType;
+                result.IsActive = entity.IsActive;
+                result.Token = generateToken(result);
+                return result;
+            }
+            throw new Exception("Server error.");
+        }
+
+        public async Task<entity.Users.Users>? Login(entity.Users.Users entity)
+        {
+            if (entity.Email == null || entity.Password == null)
+            {
+                throw new Exception("User information missing");
+            }
+            var result = await _repo.Login(entity);
+
+            if (result != null && BCrypt.Net.BCrypt.Verify(entity.Password, result.Password))
+            {
+                var user = new entity.Users.Users();
+                user.ID = result.ID;
+                user.Email = result.Email;
+                user.Username = result.Username;
+                user.AuthType = result.AuthType;
+                user.IsActive = result.IsActive;
+                user.Token = generateToken(user);
+                return user;
+            }
+
+            throw new Exception("Invalid credentials");
         }
 
         public async Task<bool> CheckEmail(string Email)
@@ -40,11 +117,6 @@ namespace trdb.business.Users
         public async Task<entity.Users.Users>? Get(int ID)
         {
             return await _repo.Get(ID);
-        }
-
-        public async Task<entity.Users.Users>? Login(string Email)
-        {
-            return await _repo.Login(Email);
         }
 
         public async Task<ProcessResult>? Update(entity.Users.Users entity)

@@ -4,6 +4,6 @@ namespace trdb.data.Interface.Helpers
 {
     public interface ILogs
     {
-        int Add(Logs entity);
+        Task<int> Add(Logs entity);
     }
 }

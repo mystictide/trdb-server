@@ -9,47 +9,83 @@ namespace trdb.data.Repo.User
 {
     public class UserRepository : Connection.dbConnection, IUsers
     {
-        public async Task<ProcessResult> Register(Users entity)
+        public async Task<Users>? Register(Users entity)
         {
             ProcessResult result = new ProcessResult();
             try
             {
                 using (var con = GetConnection)
-                {
+                { 
                     result.ReturnID = await con.InsertAsync(entity);
                     result.Message = "User saved successfully";
                     result.State = ProcessState.Success;
+                    var user = new Users();
+                    user.ID = result.ReturnID;
+                    return user;
                 }
             }
             catch (Exception ex)
             {
                 result.Message = ex.Message;
                 result.State = ProcessState.Error;
+                return null;
             }
-            return result;
+        }
+
+        public async Task<Users>? Login(Users entity)
+        {
+            try
+            {
+                DynamicParameters param = new DynamicParameters();
+                param.Add("@Email", entity.Email);
+
+                string WhereClause = @" WHERE (t.Email like '%' + @Email + '%')";
+
+                string query = $@"
+                SELECT *
+                FROM Users t
+                {WhereClause}";
+
+                using (var connection = GetConnection)
+                {
+                    var res = await connection.QueryAsync<Users>(query, param);
+                    return res.FirstOrDefault();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return null;
+            }
         }
 
         public async Task<bool> CheckEmail(string Email)
         {
-            string Query = @"Select * from Users where Email=@Email";
-            DynamicParameters p = new DynamicParameters();
-            p.Add("@Email", Email);
+            string Query = @"
+            SELECT CASE WHEN COUNT(ID) > 0 THEN 1 ELSE 0 END
+            FROM Users 
+            WHERE Email = @Email";
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@Email", Email);
             using (var con = GetConnection)
             {
-                var res = await con.QueryAsync<Users>(Query, p);
-                return !(res.Count() > 0);
+                var res = await con.QueryAsync<bool>(Query, param);
+                return res.FirstOrDefault();
             }
         }
 
         public async Task<bool> CheckUsername(string Username)
         {
-            string Query = @"Select * from Users where Username=@Username";
-            DynamicParameters p = new DynamicParameters();
-            p.Add("@Username", Username);
+            string Query = @"
+            SELECT CASE WHEN COUNT(ID) > 0 THEN 1 ELSE 0 END
+            FROM Users 
+            WHERE Username = @Username";
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@Username", Username);
             using (var con = GetConnection)
             {
-                var res = await con.QueryAsync<Users>(Query, p);
-                return !(res.Count() > 0);
+                var res = await con.QueryAsync<bool>(Query, param);
+                return res.FirstOrDefault();
             }
         }
 
@@ -104,32 +140,13 @@ namespace trdb.data.Repo.User
         {
             try
             {
-                using (var con = GetConnection)
-                {
-                    var res = await con.GetAsync<Users>(ID);
-                    return res;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogsRepository.CreateLog(ex);
-                return null;
-            }
-        }
-
-        public async Task<Users>? Login(string Email)
-        {
-            try
-            {
                 DynamicParameters param = new DynamicParameters();
-                param.Add("@Email", Email);
-
-                string WhereClause = @" WHERE (t.Email like '%' + @Email + '%')";
+                param.Add("@ID", ID);
 
                 string query = $@"
-                SELECT *
-                FROM Users t
-                {WhereClause}";
+                SELECT ID, Username, Email, AuthType, IsActive
+                FROM Users 
+                WHERE ID = @ID";
 
                 using (var connection = GetConnection)
                 {
@@ -154,7 +171,7 @@ namespace trdb.data.Repo.User
                     bool res = await con.UpdateAsync(entity);
                     if (res == true)
                     {
-                        result.ReturnID = entity.ID ?? 0;
+                        result.ReturnID = entity.ID;
                         result.Message = "User updated successfully.";
                         result.State = ProcessState.Success;
                     }

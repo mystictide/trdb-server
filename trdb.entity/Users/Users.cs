@@ -6,11 +6,14 @@ namespace trdb.entity.Users
     public class Users
     {
         [Key]
-        public int? ID { get; set; }
+        public int ID { get; set; }
         public string? Username { get; set; }
-        public string? Email { get; set; }
-        public string? Password { get; set; }
-        public int? AuthType { get; set; }
-        public bool? IsActive { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public int AuthType { get; set; }
+        public bool IsActive { get; set; }
+
+        [Write(false)]
+        public string? Token { get; set; }
     }
 }
