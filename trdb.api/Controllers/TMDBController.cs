@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using RestSharp;
 using trdb.api.Helpers;
 
@@ -17,14 +16,24 @@ namespace trdb.api.Controllers
             _logger = logger;
         }
 
+        private static int AuthorizedAuthType = 3;
         private static string tmdb_key = "c33e76a04be19de0f46ae6301aec3a6a";
 
-        [HttpGet]
+        #region List
+        #endregion
+
+        #region Import
+        [HttpPost]
         [Route("import/genre")]
         public async Task<IActionResult> ImportGenres()
         {
             try
             {
+                var token = CustomHelpers.ReadBearerToken(HttpContext);
+                if (CustomHelpers.ValidateToken(token, AuthorizedAuthType))
+                {
+
+                }
                 return Ok("");
             }
             catch (Exception ex)
@@ -62,5 +71,12 @@ namespace trdb.api.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+        #endregion
+
+        #region Update
+        #endregion
+
+        #region Delete
+        #endregion
     }
 }

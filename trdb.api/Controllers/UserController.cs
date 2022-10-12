@@ -1,11 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using trdb.business.Users;
 
 namespace trdb.api.Controllers
 {
     [ApiController]
-    [Route("user"), Authorize]
+    [Route("user")]
     public class UserController : Controller
     {
         private readonly ILogger<UserController> _logger;

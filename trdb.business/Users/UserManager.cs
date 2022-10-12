@@ -61,12 +61,11 @@ namespace trdb.business.Users
             var result = await _repo.Register(entity);
             if (result != null)
             {
-                result.Email = entity.Email;
-                result.Username = entity.Username;
                 result.AuthType = entity.AuthType;
-                result.IsActive = entity.IsActive;
-                result.Token = generateToken(result);
-                return result;
+                var user = new entity.Users.Users();
+                user.Username = entity.Username;
+                user.Token = generateToken(result);
+                return user;
             }
             throw new Exception("Server error.");
         }
@@ -77,17 +76,14 @@ namespace trdb.business.Users
             {
                 throw new Exception("User information missing");
             }
+
             var result = await _repo.Login(entity);
 
             if (result != null && BCrypt.Net.BCrypt.Verify(entity.Password, result.Password))
             {
                 var user = new entity.Users.Users();
-                user.ID = result.ID;
-                user.Email = result.Email;
                 user.Username = result.Username;
-                user.AuthType = result.AuthType;
-                user.IsActive = result.IsActive;
-                user.Token = generateToken(user);
+                user.Token = generateToken(result);
                 return user;
             }
 

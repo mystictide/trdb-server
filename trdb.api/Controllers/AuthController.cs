@@ -21,7 +21,10 @@ namespace trdb.api.Controllers
         {
             try
             {
-                var userData = await new UserManager().Register(user);
+                var data = await new UserManager().Register(user);
+                var userData = new UserReturn();
+                userData.Username = data.Username;
+                userData.Token = data.Token;
                 return Ok(userData);
             }
             catch (Exception ex)
@@ -36,7 +39,10 @@ namespace trdb.api.Controllers
         {
             try
             {
-                var userData = await new UserManager().Login(user);
+                var data = await new UserManager().Login(user);
+                var userData = new UserReturn();
+                userData.Username = data.Username;
+                userData.Token = data.Token;
                 return Ok(userData);
             }
             catch (Exception ex)

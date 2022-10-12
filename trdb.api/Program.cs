@@ -44,6 +44,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+//app.UseMiddleware();
 app.UseHttpsRedirection();
 app.UseCors("AllowOrigin");
 app.UseRouting();
