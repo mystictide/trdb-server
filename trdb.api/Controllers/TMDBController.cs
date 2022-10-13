@@ -29,8 +29,8 @@ namespace trdb.api.Controllers
         {
             try
             {
-                var token = CustomHelpers.ReadBearerToken(HttpContext);
-                if (CustomHelpers.ValidateToken(token, AuthorizedAuthType))
+                var token = TokenHelpers.ReadBearerToken(HttpContext);
+                if (TokenHelpers.ValidateToken(token, AuthorizedAuthType))
                 {
 
                 }
@@ -44,12 +44,12 @@ namespace trdb.api.Controllers
 
         [HttpPost]
         [Route("import/movie")]
-        public async Task<IActionResult> ImportMovies(int count)
+        public async Task<IActionResult> ImportMovies()
         {
             try
             {
-                int successCounter = 0;
-                while (successCounter < count)
+                var token = TokenHelpers.ReadBearerToken(HttpContext);
+                if (TokenHelpers.ValidateToken(token, AuthorizedAuthType))
                 {
                     var url = "https://api.themoviedb.org/3/movie/2?api_key=" + tmdb_key;
                     var client = new RestClient(url);
@@ -60,11 +60,12 @@ namespace trdb.api.Controllers
 
                     if (CustomHelpers.IsResponseSuccessful(data))
                     {
-                        successCounter++;
+                        var movieData = MovieHelpers.FormatTMDBResponse(jsonResponse.ToString());
+                        return Ok(data);
                     }
                 }
 
-                return Ok("Successfully added" + successCounter + "new items");
+                return Ok();
             }
             catch (Exception ex)
             {

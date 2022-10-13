@@ -3,12 +3,12 @@ using Newtonsoft.Json;
 
 namespace trdb.entity.Movies
 {
-    [Table("Languages")]
-    public class Languages
+    [Table("ProductionCountries")]
+    public class ProductionCountries
     {
         [Key]
         public int ID { get; set; }
-        [JsonProperty("english_name")]
+        [JsonProperty("name")]
         public string Name { get; set; }
     }
 }

@@ -7,13 +7,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastru
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Presentation", "Presentation", "{0A3662AA-67DF-4EA5-B245-619814E45806}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trdb.api", "trdb.api\trdb.api.csproj", "{E8B4A17F-BB6F-4618-A049-31282B214E9B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "trdb.api", "trdb.api\trdb.api.csproj", "{E8B4A17F-BB6F-4618-A049-31282B214E9B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trdb.entity", "trdb.entity\trdb.entity.csproj", "{466344F2-BFC0-4D89-9BF1-886EBB333D44}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "trdb.entity", "trdb.entity\trdb.entity.csproj", "{466344F2-BFC0-4D89-9BF1-886EBB333D44}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trdb.data", "trdb.data\trdb.data.csproj", "{B571C41F-7D37-495B-893D-97D493C4A4F7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "trdb.data", "trdb.data\trdb.data.csproj", "{B571C41F-7D37-495B-893D-97D493C4A4F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trdb.business", "trdb.business\trdb.business.csproj", "{C3185DA4-1C9E-43D3-B2FE-C39C04FE16DF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "trdb.business", "trdb.business\trdb.business.csproj", "{C3185DA4-1C9E-43D3-B2FE-C39C04FE16DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
