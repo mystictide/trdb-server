@@ -5,9 +5,33 @@ using trdb.entity.Helpers;
 
 namespace trdb.api.Helpers
 {
-    public class TokenHelpers
+    public class AuthHelpers
     {
-        public static bool ValidateToken(string encodedToken, int AuthorizedAuthType)
+        public static bool Authorize(HttpContext context, int AuthorizedAuthType)
+        {
+            return ValidateToken(ReadBearerToken(context), AuthorizedAuthType);
+        }
+
+        public static string? ReadBearerToken(HttpContext context)
+        {
+            try
+            {
+                string header = (string)context.Request.Headers["Authorization"];
+                if (header != null)
+                {
+                    return header.Substring(7);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+        public static bool ValidateToken(string? encodedToken, int AuthorizedAuthType)
         {
             try
             {
@@ -37,26 +61,6 @@ namespace trdb.api.Helpers
             catch (Exception)
             {
                 return false;
-            }
-        }
-
-        public static string? ReadBearerToken(HttpContext context)
-        {
-            try
-            {
-                string header = (string)context.Request.Headers["Authorization"];
-                if (header != null)
-                {
-                    return header.Substring(7);
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            catch (Exception)
-            {
-                return null;
             }
         }
     }

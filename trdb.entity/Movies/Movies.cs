@@ -7,6 +7,7 @@ namespace trdb.entity.Movies
     public class Movies
     {
         [Key]
+        [JsonIgnore]
         public int ID { get; set; }
         [JsonProperty("id")]
         public int TMDB_ID { get; set; }

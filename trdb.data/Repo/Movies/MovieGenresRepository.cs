@@ -3,6 +3,7 @@ using Dapper.Contrib.Extensions;
 using trdb.data.Interface.Movies;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
+using trdb.entity.Movies;
 
 namespace trdb.data.Repo.MovieGenres
 {
@@ -131,6 +132,49 @@ namespace trdb.data.Repo.MovieGenres
                 LogsRepository.CreateLog(ex);
                 return null;
             }
+        }
+
+        public async Task<List<entity.Movies.MovieGenres>> Import(List<entity.Movies.MovieGenres> entity)
+        {
+            var result = new List<entity.Movies.MovieGenres>();
+            foreach (var item in entity)
+            {
+                try
+                {
+                    DynamicParameters param = new DynamicParameters();
+                    param.Add("@TMDB_ID", item.TMDB_ID);
+                    param.Add("@Name", item.Name);
+
+                    string query = $@"
+                    DECLARE  @result table(ID Int, TMDB_ID Int, Name nvarchar(100))
+                    IF EXISTS(SELECT * from MovieGenres where TMDB_ID = @TMDB_ID)        
+                    BEGIN            
+                    UPDATE MovieGenres
+                                SET TMDB_ID = @TMDB_ID, Name = @Name
+							    OUTPUT INSERTED.* INTO @result
+                                WHERE TMDB_ID = @TMDB_ID;
+                    END                    
+                    ELSE            
+                    BEGIN  
+                    INSERT INTO MovieGenres (TMDB_ID, Name)
+                                 OUTPUT INSERTED.* INTO @result
+                                 VALUES (@TMDB_ID, @Name)
+                    END
+                    SELECT *
+				    FROM @result";
+
+                    using (var con = GetConnection)
+                    {
+                        var res = await con.QueryFirstOrDefaultAsync<entity.Movies.MovieGenres>(query, param);
+                        result.Add(res);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogsRepository.CreateLog(ex);
+                }
+            }
+            return result;
         }
 
         public async Task<ProcessResult> Update(entity.Movies.MovieGenres entity)

@@ -29,8 +29,7 @@ namespace trdb.api.Controllers
         {
             try
             {
-                var token = TokenHelpers.ReadBearerToken(HttpContext);
-                if (TokenHelpers.ValidateToken(token, AuthorizedAuthType))
+                if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
 
                 }
@@ -48,8 +47,7 @@ namespace trdb.api.Controllers
         {
             try
             {
-                var token = TokenHelpers.ReadBearerToken(HttpContext);
-                if (TokenHelpers.ValidateToken(token, AuthorizedAuthType))
+                if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
                     var url = "https://api.themoviedb.org/3/movie/2?api_key=" + tmdb_key;
                     var client = new RestClient(url);
@@ -61,7 +59,7 @@ namespace trdb.api.Controllers
                     if (CustomHelpers.IsResponseSuccessful(data))
                     {
                         var movieData = MovieHelpers.FormatTMDBResponse(jsonResponse.ToString());
-                        return Ok(data);
+                        return Ok(movieData);
                     }
                 }
 

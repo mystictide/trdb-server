@@ -3,6 +3,7 @@ using Dapper;
 using trdb.data.Interface.Movies;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
+using trdb.entity.Movies;
 
 namespace trdb.data.Repo.Movies
 {
@@ -123,6 +124,48 @@ namespace trdb.data.Repo.Movies
                 using (var con = GetConnection)
                 {
                     var res = await con.GetAllAsync<entity.Movies.Movies>();
+                    return res;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return null;
+            }
+        }
+
+        public async Task<entity.Movies.Movies> Import(entity.Movies.Movies entity)
+        {
+            try
+            {
+                #region params
+                DynamicParameters param = new DynamicParameters();
+                param.Add("@ID", entity.ID);
+                param.Add("@TMDB_ID", entity.TMDB_ID);
+
+                #endregion
+
+                string query = $@"
+                   DECLARE  @result table(ID Int, TMDB_ID Int, Name nvarchar(MAX), Logo_URL nvarchar(MAX), Origin nvarchar(100))
+                    IF EXISTS(SELECT * from ProductionCompanies where TMDB_ID = @TMDB_ID)        
+                    BEGIN            
+                    UPDATE ProductionCompanies
+                                SET TMDB_ID = @TMDB_ID, Name = @Name, Logo_URL = @Logo_URL, Origin = @Origin
+							    OUTPUT INSERTED.* INTO @result
+                                WHERE ID = @ID AND TMDB_ID = @TMDB_ID;
+                    END                    
+                    ELSE            
+                    BEGIN  
+                    INSERT INTO ProductionCompanies (TMDB_ID, Name, Logo_URL, Origin)
+                                 OUTPUT INSERTED.* INTO @result
+                                 VALUES (@TMDB_ID, @Name, @Logo_URL, @Origin)
+                    END
+                    SELECT *
+				    FROM @result";
+
+                using (var con = GetConnection)
+                {
+                    var res = await con.QueryFirstOrDefaultAsync<entity.Movies.Movies>(query, param);
                     return res;
                 }
             }

@@ -1,4 +1,5 @@
-﻿using trdb.data.Interface.Movies;
+﻿using trdb.business.Movies.Junctions;
+using trdb.data.Interface.Movies;
 using trdb.data.Repo.Movies;
 using trdb.entity.Helpers;
 
@@ -35,6 +36,17 @@ namespace trdb.business.Movies
         public async Task<IEnumerable<entity.Movies.Movies>> GetAll()
         {
             return await _repo.GetAll();
+        }
+
+        public async Task<entity.Movies.Movies> Import(entity.Movies.Movies entity)
+        {
+            var companies = await new ProductionCompanyManager().Import(entity.Companies);
+            var movie = await _repo.Import(entity);
+            var genreJunk = await new MovieGenreJunctionManager().Manage(entity.Genres, movie.ID);
+            var languageJunk = await new MovieLanguageJunctionManager().Manage(entity.Languages, movie.ID);
+            var companiesJunk = await new MovieProductionCompanyJunctionManager().Manage(entity.Companies, movie.ID);
+            var countriesJunk = await new MovieProductionCountryJunctionManager().Manage(entity.Countries, movie.ID);
+            return movie;
         }
 
         public async Task<ProcessResult> Update(entity.Movies.Movies entity)

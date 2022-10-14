@@ -134,6 +134,50 @@ namespace trdb.data.Repo.Movies.Junctions
             }
         }
 
+        public async Task<List<MovieGenreJunction>> Manage(List<entity.Movies.MovieGenres> entity, int MovieID)
+        {
+            var result = new List<MovieGenreJunction>();
+            foreach (var item in entity)
+            {
+                try
+                {
+                    DynamicParameters param = new DynamicParameters();
+                    param.Add("@MovieID", MovieID);
+                    param.Add("@GenreID", item.ID);
+
+                    string query = $@"
+                    DECLARE  @result table(ID Int, MovieID Int, GenreID Int)
+                    IF EXISTS(SELECT * from MovieGenreJunction where MovieID = @MovieID AND GenreID = @GenreID)        
+                    BEGIN            
+                    UPDATE MovieGenreJunction
+                                SET MovieID = @MovieID, GenreID = @GenreID
+							    OUTPUT INSERTED.* INTO @result
+                                WHERE MovieID = @MovieID AND GenreID = @GenreID;
+                    END                    
+                    ELSE            
+                    BEGIN  
+                    INSERT INTO MovieGenreJunction (MovieID, GenreID)
+                                 OUTPUT INSERTED.* INTO @result
+                                 VALUES (@MovieID, @GenreID)
+                    END
+                    SELECT *
+				    FROM @result";
+
+                    using (var con = GetConnection)
+                    {
+                        var res = await con.QueryFirstOrDefaultAsync<MovieGenreJunction>(query, param);
+                        res.Name = item.Name;
+                        result.Add(res);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogsRepository.CreateLog(ex);
+                }
+            }
+            return result;
+        }
+
         public async Task<ProcessResult> Update(MovieGenreJunction entity)
         {
             ProcessResult result = new ProcessResult();

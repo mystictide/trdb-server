@@ -134,6 +134,51 @@ namespace trdb.data.Repo.Movies
             }
         }
 
+        public async Task<List<ProductionCompanies>> Import(List<ProductionCompanies> entity)
+        {
+            var result = new List<ProductionCompanies>();
+            foreach (var item in entity)
+            {
+                try
+                {
+                    DynamicParameters param = new DynamicParameters();
+                    param.Add("@TMDB_ID", item.TMDB_ID);
+                    param.Add("@Name", item.Name);
+                    param.Add("@Logo_URL", item.Logo_URL);
+                    param.Add("@Origin", item.Origin);
+
+                    string query = $@"
+                   DECLARE  @result table(ID Int, TMDB_ID Int, Name nvarchar(MAX), Logo_URL nvarchar(MAX), Origin nvarchar(100))
+                    IF EXISTS(SELECT * from ProductionCompanies where TMDB_ID = @TMDB_ID)        
+                    BEGIN            
+                    UPDATE ProductionCompanies
+                                SET TMDB_ID = @TMDB_ID, Name = @Name, Logo_URL = @Logo_URL, Origin = @Origin
+							    OUTPUT INSERTED.* INTO @result
+                                WHERE TMDB_ID = @TMDB_ID;
+                    END                    
+                    ELSE            
+                    BEGIN  
+                    INSERT INTO ProductionCompanies (TMDB_ID, Name, Logo_URL, Origin)
+                                 OUTPUT INSERTED.* INTO @result
+                                 VALUES (@TMDB_ID, @Name, @Logo_URL, @Origin)
+                    END
+                    SELECT *
+				    FROM @result";
+
+                    using (var con = GetConnection)
+                    {
+                        var res = await con.QueryFirstOrDefaultAsync<ProductionCompanies>(query, param);
+                        result.Add(res);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogsRepository.CreateLog(ex);
+                }
+            }
+            return result;
+        }
+
         public async Task<ProcessResult> Update(ProductionCompanies entity)
         {
             ProcessResult result = new ProcessResult();

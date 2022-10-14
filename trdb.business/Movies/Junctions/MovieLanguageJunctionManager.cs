@@ -1,6 +1,7 @@
 ﻿using trdb.data.Interface.Movies.Junctions;
 using trdb.data.Repo.Movies.Junctions;
 using trdb.entity.Helpers;
+using trdb.entity.Movies;
 using trdb.entity.Movies.Junctions;
 
 namespace trdb.business.Movies.Junctions
@@ -36,6 +37,11 @@ namespace trdb.business.Movies.Junctions
         public async Task<IEnumerable<MovieLanguageJunction>> GetAll()
         {
             return await _repo.GetAll();
+        }
+
+        public async Task<List<MovieLanguageJunction>> Manage(List<Languages> entity, int MovieID)
+        {
+            return await _repo.Manage(entity, MovieID);
         }
 
         public async Task<ProcessResult> Update(MovieLanguageJunction entity)

@@ -2,15 +2,15 @@
 using Dapper;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
-using trdb.data.Interface.Movies.Junctions;
 using trdb.entity.Movies.Junctions;
+using trdb.data.Interface.Movies.Junctions;
 using trdb.entity.Movies;
 
 namespace trdb.data.Repo.Movies.Junctions
 {
-    public class MovieProductionCompanyJunctionRepository : Connection.dbConnection, IMovieProductionCompanyJunction
+    public class MovieProductionCountryJunctionRepository : Connection.dbConnection, IMovieProductionCountriesJunction
     {
-        public async Task<MovieProductionCompanyJunction> Add(MovieProductionCompanyJunction entity)
+        public async Task<MovieProductionCountryJunction> Add(MovieProductionCountryJunction entity)
         {
             ProcessResult result = new ProcessResult();
             try
@@ -39,7 +39,7 @@ namespace trdb.data.Repo.Movies.Junctions
                 ProcessResult pr = new ProcessResult();
                 try
                 {
-                    await con.DeleteAsync(new MovieProductionCompanyJunction() { ID = ID });
+                    await con.DeleteAsync(new MovieProductionCountryJunction() { ID = ID });
                     pr.ReturnID = 0;
                     pr.Message = "Success";
                     pr.State = ProcessState.Success;
@@ -54,22 +54,22 @@ namespace trdb.data.Repo.Movies.Junctions
             }
         }
 
-        public async Task<FilteredList<MovieProductionCompanyJunction>> FilteredList(FilteredList<MovieProductionCompanyJunction> request)
+        public async Task<FilteredList<MovieProductionCountryJunction>> FilteredList(FilteredList<MovieProductionCountryJunction> request)
         {
             try
             {
-                FilteredList<MovieProductionCompanyJunction> result = new FilteredList<MovieProductionCompanyJunction>();
+                FilteredList<MovieProductionCountryJunction> result = new FilteredList<MovieProductionCountryJunction>();
                 DynamicParameters param = new DynamicParameters();
                 param.Add("@Keyword", request.filter.Keyword);
                 param.Add("@PageSize", request.filter.pageSize);
 
                 string WhereClause = @" WHERE (t.Name like '%' + @Keyword + '%')";
 
-                string query_count = $@"  Select Count(t.ID) from MovieProductionCompanyJunction t {WhereClause}";
+                string query_count = $@"  Select Count(t.ID) from MovieProductionCountryJunction t {WhereClause}";
 
                 string query = $@"
                 SELECT *
-                FROM MovieProductionCompanyJunction t
+                FROM MovieProductionCountryJunction t
                 {WhereClause} 
                 ORDER BY t.ID ASC 
                 OFFSET @StartIndex ROWS
@@ -80,7 +80,7 @@ namespace trdb.data.Repo.Movies.Junctions
                     result.totalItems = await con.QueryFirstOrDefaultAsync<int>(query_count, param);
                     request.filter.pager = new Page(result.totalItems, request.filter.pageSize, request.filter.page);
                     param.Add("@StartIndex", request.filter.pager.StartIndex);
-                    result.data = await con.QueryAsync<MovieProductionCompanyJunction>(query, param);
+                    result.data = await con.QueryAsync<MovieProductionCountryJunction>(query, param);
                     result.filter = request.filter;
                     result.filterModel = request.filterModel;
                     return result;
@@ -93,7 +93,7 @@ namespace trdb.data.Repo.Movies.Junctions
             }
         }
 
-        public async Task<MovieProductionCompanyJunction> Get(int ID)
+        public async Task<MovieProductionCountryJunction> Get(int ID)
         {
             try
             {
@@ -102,12 +102,12 @@ namespace trdb.data.Repo.Movies.Junctions
 
                 string query = $@"
                 SELECT *
-                FROM MovieProductionCompanyJunction 
+                FROM MovieProductionCountryJunction 
                 WHERE ID = @ID";
 
                 using (var con = GetConnection)
                 {
-                    var res = await con.QueryAsync<MovieProductionCompanyJunction>(query, param);
+                    var res = await con.QueryAsync<MovieProductionCountryJunction>(query, param);
                     return res.FirstOrDefault();
                 }
             }
@@ -118,13 +118,13 @@ namespace trdb.data.Repo.Movies.Junctions
             }
         }
 
-        public async Task<IEnumerable<MovieProductionCompanyJunction>> GetAll()
+        public async Task<IEnumerable<MovieProductionCountryJunction>> GetAll()
         {
             try
             {
                 using (var con = GetConnection)
                 {
-                    var res = await con.GetAllAsync<MovieProductionCompanyJunction>();
+                    var res = await con.GetAllAsync<MovieProductionCountryJunction>();
                     return res;
                 }
             }
@@ -135,38 +135,38 @@ namespace trdb.data.Repo.Movies.Junctions
             }
         }
 
-        public async Task<List<MovieProductionCompanyJunction>> Manage(List<ProductionCompanies> entity, int MovieID)
+        public async Task<List<MovieProductionCountryJunction>> Manage(List<ProductionCountries> entity, int MovieID)
         {
-            var result = new List<MovieProductionCompanyJunction>();
+            var result = new List<MovieProductionCountryJunction>();
             foreach (var item in entity)
             {
                 try
                 {
                     DynamicParameters param = new DynamicParameters();
                     param.Add("@MovieID", MovieID);
-                    param.Add("@ProductionCompanyID", item.ID);
+                    param.Add("@ProductionCountryID", item.ID);
 
                     string query = $@"
-                    DECLARE  @result table(ID Int, MovieID Int, ProductionCompanyID Int)
-                    IF EXISTS(SELECT * from MovieProductionCompanyJunction where MovieID = @MovieID AND ProductionCompanyID = @ProductionCompanyID)        
+                    DECLARE  @result table(ID Int, MovieID Int, ProductionCountryID Int)
+                    IF EXISTS(SELECT * from MovieProductionCountryJunction where MovieID = @MovieID AND ProductionCountryID = @ProductionCountryID)        
                     BEGIN            
-                    UPDATE MovieProductionCompanyJunction
-                                SET MovieID = @MovieID, ProductionCompanyID = @ProductionCompanyID
+                    UPDATE MovieProductionCountryJunction
+                                SET MovieID = @MovieID, ProductionCountryID = @ProductionCountryID
 							    OUTPUT INSERTED.* INTO @result
-                                WHERE MovieID = @MovieID AND ProductionCompanyID = @ProductionCompanyID;
+                                WHERE MovieID = @MovieID AND ProductionCountryID = @ProductionCountryID;
                     END                    
                     ELSE            
                     BEGIN  
-                    INSERT INTO MovieProductionCompanyJunction (MovieID, ProductionCompanyID)
+                    INSERT INTO MovieProductionCountryJunction (MovieID, ProductionCountryID)
                                  OUTPUT INSERTED.* INTO @result
-                                 VALUES (@MovieID, @ProductionCompanyID)
+                                 VALUES (@MovieID, @ProductionCountryID)
                     END
                     SELECT *
 				    FROM @result";
 
                     using (var con = GetConnection)
                     {
-                        var res = await con.QueryFirstOrDefaultAsync<MovieProductionCompanyJunction>(query, param);
+                        var res = await con.QueryFirstOrDefaultAsync<MovieProductionCountryJunction>(query, param);
                         res.Name = item.Name;
                         result.Add(res);
                     }
@@ -179,7 +179,7 @@ namespace trdb.data.Repo.Movies.Junctions
             return result;
         }
 
-        public async Task<ProcessResult> Update(MovieProductionCompanyJunction entity)
+        public async Task<ProcessResult> Update(MovieProductionCountryJunction entity)
         {
             ProcessResult result = new ProcessResult();
             try

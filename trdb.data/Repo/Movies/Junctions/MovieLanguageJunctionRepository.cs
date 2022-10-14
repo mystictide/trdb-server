@@ -4,6 +4,7 @@ using trdb.data.Interface.Movies.Junctions;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
 using trdb.entity.Movies.Junctions;
+using trdb.entity.Movies;
 
 namespace trdb.data.Repo.Movies.Junctions
 {
@@ -132,6 +133,50 @@ namespace trdb.data.Repo.Movies.Junctions
                 LogsRepository.CreateLog(ex);
                 return null;
             }
+        }
+
+        public async Task<List<MovieLanguageJunction>> Manage(List<Languages> entity, int MovieID)
+        {
+            var result = new List<MovieLanguageJunction>();
+            foreach (var item in entity)
+            {
+                try
+                {
+                    DynamicParameters param = new DynamicParameters();
+                    param.Add("@MovieID", MovieID);
+                    param.Add("@LanguageID", item.ID);
+
+                    string query = $@"
+                    DECLARE  @result table(ID Int, MovieID Int, LanguageID Int)
+                    IF EXISTS(SELECT * from MovieLanguageJunction where MovieID = @MovieID AND LanguageID = @LanguageID)        
+                    BEGIN            
+                    UPDATE MovieLanguageJunction
+                                SET MovieID = @MovieID, LanguageID = @LanguageID
+							    OUTPUT INSERTED.* INTO @result
+                                WHERE MovieID = @MovieID AND LanguageID = @LanguageID;
+                    END                    
+                    ELSE            
+                    BEGIN  
+                    INSERT INTO MovieLanguageJunction (MovieID, LanguageID)
+                                 OUTPUT INSERTED.* INTO @result
+                                 VALUES (@MovieID, @LanguageID)
+                    END
+                    SELECT *
+				    FROM @result";
+
+                    using (var con = GetConnection)
+                    {
+                        var res = await con.QueryFirstOrDefaultAsync<MovieLanguageJunction>(query, param);
+                        res.Name = item.Name;
+                        result.Add(res);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogsRepository.CreateLog(ex);
+                }
+            }
+            return result;
         }
 
         public async Task<ProcessResult> Update(MovieLanguageJunction entity)
