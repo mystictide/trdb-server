@@ -3,7 +3,6 @@ using Dapper;
 using trdb.data.Interface.Movies;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
-using trdb.entity.Movies;
 
 namespace trdb.data.Repo.Movies
 {
@@ -134,6 +133,26 @@ namespace trdb.data.Repo.Movies
             }
         }
 
+        public async Task<int> GetLatestMovie()
+        {
+            try
+            {
+                string query = $@"
+                SELECT TOP 1 TMDB_ID FROM Movies ORDER BY ID DESC ";
+
+                using (var con = GetConnection)
+                {
+                    var res = await con.QueryFirstOrDefaultAsync<int>(query);
+                    return res;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return 0;
+            }
+        }
+
         public async Task<entity.Movies.Movies> Import(entity.Movies.Movies entity)
         {
             try
@@ -142,23 +161,33 @@ namespace trdb.data.Repo.Movies
                 DynamicParameters param = new DynamicParameters();
                 param.Add("@ID", entity.ID);
                 param.Add("@TMDB_ID", entity.TMDB_ID);
-
+                param.Add("@IMDB_ID", entity.IMDB_ID);
+                param.Add("@Title", entity.Title);
+                param.Add("@Budget", entity.Budget);
+                param.Add("@Backdrop_URL", entity.Backdrop_URL);
+                param.Add("@Poster_URL", entity.Poster_URL);
+                param.Add("@Homepage", entity.Homepage);
+                param.Add("@Synopsis", entity.Synopsis);
+                param.Add("@Runtime", entity.Runtime);
+                param.Add("@Release_Date", entity.Release_Date);
+                param.Add("@Tagline", entity.Tagline);
+                param.Add("@IsAdult", entity.IsAdult);
                 #endregion
 
                 string query = $@"
-                   DECLARE  @result table(ID Int, TMDB_ID Int, Name nvarchar(MAX), Logo_URL nvarchar(MAX), Origin nvarchar(100))
-                    IF EXISTS(SELECT * from ProductionCompanies where TMDB_ID = @TMDB_ID)        
+                   DECLARE  @result table(ID Int, TMDB_ID Int, IMDB_ID nvarchar(MAX), Title nvarchar(MAX), Budget decimal(18, 2), Backdrop_URL nvarchar(MAX), Poster_URL nvarchar(MAX), Homepage nvarchar(MAX), Synopsis nvarchar(MAX), Runtime Int, Release_Date nvarchar(50), Tagline nvarchar(MAX), IsAdult bit)
+                    IF EXISTS(SELECT * from Movies where TMDB_ID = @TMDB_ID)        
                     BEGIN            
-                    UPDATE ProductionCompanies
-                                SET TMDB_ID = @TMDB_ID, Name = @Name, Logo_URL = @Logo_URL, Origin = @Origin
+                    UPDATE Movies
+                                SET TMDB_ID = @TMDB_ID, IMDB_ID = @IMDB_ID, Title = @Title, Budget = @Budget, Backdrop_URL = @Backdrop_URL, Poster_URL = @Poster_URL, Homepage = @Homepage, Synopsis = @Synopsis, Runtime = @Runtime, Release_Date = @Release_Date, Tagline = @Tagline, IsAdult = @IsAdult
 							    OUTPUT INSERTED.* INTO @result
-                                WHERE ID = @ID AND TMDB_ID = @TMDB_ID;
+                                WHERE TMDB_ID = @TMDB_ID;
                     END                    
                     ELSE            
                     BEGIN  
-                    INSERT INTO ProductionCompanies (TMDB_ID, Name, Logo_URL, Origin)
+                    INSERT INTO Movies (TMDB_ID, IMDB_ID, Title, Budget, Backdrop_URL, Poster_URL, Homepage, Synopsis, Runtime, Release_Date, Tagline, IsAdult)
                                  OUTPUT INSERTED.* INTO @result
-                                 VALUES (@TMDB_ID, @Name, @Logo_URL, @Origin)
+                                 VALUES (@TMDB_ID, @IMDB_ID, @Title, @Budget, @Backdrop_URL, @Poster_URL, @Homepage, @Synopsis, @Runtime, @Release_Date, @Tagline, @IsAdult)
                     END
                     SELECT *
 				    FROM @result";

@@ -1,20 +1,34 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using RestSharp;
+using trdb.api.Models;
 
 namespace trdb.api.Helpers
 {
     public class CustomHelpers
     {
-        public static bool IsResponseSuccessful(dynamic data)
+        public static async Task<string> SendRequest(string url, Method method)
         {
             try
             {
-                foreach (JProperty property in data)
+                var client = new RestClient(url);
+                var request = new RestRequest(url, method);
+                RestResponse response = await client.ExecuteAsync(request);
+                return JsonConvert.DeserializeObject(response.Content).ToString();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public static bool IsResponseSuccessful(string jsonString)
+        {
+            try
+            {
+                var status = JsonConvert.DeserializeObject<TMDB_Error>(jsonString);
+                if (status.Code > 0)
                 {
-                    var prop = (property.Name, property.Value);
-                    if (prop.Name == "success" && prop.Value.ToString() == "{False}")
-                    {
-                        return false;
-                    }
+                    return false;
                 }
                 return true;
             }

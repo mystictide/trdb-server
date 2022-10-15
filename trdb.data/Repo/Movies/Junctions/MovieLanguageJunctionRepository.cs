@@ -135,9 +135,9 @@ namespace trdb.data.Repo.Movies.Junctions
             }
         }
 
-        public async Task<List<MovieLanguageJunction>> Manage(List<Languages> entity, int MovieID)
+        public async Task<List<Languages>> Manage(List<Languages> entity, int MovieID)
         {
-            var result = new List<MovieLanguageJunction>();
+            var result = new List<Languages>();
             foreach (var item in entity)
             {
                 try
@@ -145,9 +145,14 @@ namespace trdb.data.Repo.Movies.Junctions
                     DynamicParameters param = new DynamicParameters();
                     param.Add("@MovieID", MovieID);
                     param.Add("@LanguageID", item.ID);
+                    param.Add("@Name", item.Name);
 
                     string query = $@"
                     DECLARE  @result table(ID Int, MovieID Int, LanguageID Int)
+                    IF @LanguageID < 1
+                    BEGIN
+                    SET @LanguageID = (select ID from Languages where Name = @Name)
+                    END
                     IF EXISTS(SELECT * from MovieLanguageJunction where MovieID = @MovieID AND LanguageID = @LanguageID)        
                     BEGIN            
                     UPDATE MovieLanguageJunction
@@ -167,8 +172,8 @@ namespace trdb.data.Repo.Movies.Junctions
                     using (var con = GetConnection)
                     {
                         var res = await con.QueryFirstOrDefaultAsync<MovieLanguageJunction>(query, param);
-                        res.Name = item.Name;
-                        result.Add(res);
+                        item.ID = res.ID;
+                        result.Add(item);
                     }
                 }
                 catch (Exception ex)

@@ -146,12 +146,12 @@ namespace trdb.data.Repo.Movies
 
                     string query = $@"
                     DECLARE  @result table(ID Int, Name nvarchar(100))
-                    IF EXISTS(SELECT * from Languages where Name like @Name)        
+                    IF EXISTS(SELECT * from Languages where Name = @Name)        
                     BEGIN            
                     UPDATE Languages
                                 SET Name = @Name
 							    OUTPUT INSERTED.* INTO @result
-                                WHERE Name like @Name;
+                                WHERE Name = @Name;
                     END                    
                     ELSE            
                     BEGIN  

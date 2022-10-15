@@ -38,14 +38,19 @@ namespace trdb.business.Movies
             return await _repo.GetAll();
         }
 
+        public async Task<int> GetLatestMovie()
+        {
+            return await _repo.GetLatestMovie();
+        }
+
         public async Task<entity.Movies.Movies> Import(entity.Movies.Movies entity)
         {
             var companies = await new ProductionCompanyManager().Import(entity.Companies);
             var movie = await _repo.Import(entity);
-            var genreJunk = await new MovieGenreJunctionManager().Manage(entity.Genres, movie.ID);
-            var languageJunk = await new MovieLanguageJunctionManager().Manage(entity.Languages, movie.ID);
-            var companiesJunk = await new MovieProductionCompanyJunctionManager().Manage(entity.Companies, movie.ID);
-            var countriesJunk = await new MovieProductionCountryJunctionManager().Manage(entity.Countries, movie.ID);
+            movie.Genres = await new MovieGenreJunctionManager().Manage(entity.Genres, movie.ID);
+            movie.Languages = await new MovieLanguageJunctionManager().Manage(entity.Languages, movie.ID);
+            movie.Companies = await new MovieProductionCompanyJunctionManager().Manage(companies, movie.ID);
+            movie.Countries = await new MovieProductionCountryJunctionManager().Manage(entity.Countries, movie.ID);
             return movie;
         }
 

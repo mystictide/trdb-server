@@ -134,16 +134,16 @@ namespace trdb.data.Repo.Movies.Junctions
             }
         }
 
-        public async Task<List<MovieGenreJunction>> Manage(List<entity.Movies.MovieGenres> entity, int MovieID)
+        public async Task<List<entity.Movies.MovieGenres>> Manage(List<entity.Movies.MovieGenres> entity, int MovieID)
         {
-            var result = new List<MovieGenreJunction>();
+            var result = new List<entity.Movies.MovieGenres>();
             foreach (var item in entity)
             {
                 try
                 {
                     DynamicParameters param = new DynamicParameters();
                     param.Add("@MovieID", MovieID);
-                    param.Add("@GenreID", item.ID);
+                    param.Add("@GenreID", item.TMDB_ID);
 
                     string query = $@"
                     DECLARE  @result table(ID Int, MovieID Int, GenreID Int)
@@ -166,8 +166,8 @@ namespace trdb.data.Repo.Movies.Junctions
                     using (var con = GetConnection)
                     {
                         var res = await con.QueryFirstOrDefaultAsync<MovieGenreJunction>(query, param);
-                        res.Name = item.Name;
-                        result.Add(res);
+                        item.ID = res.ID;
+                        result.Add(item);
                     }
                 }
                 catch (Exception ex)

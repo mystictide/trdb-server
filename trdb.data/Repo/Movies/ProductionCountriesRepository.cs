@@ -143,21 +143,22 @@ namespace trdb.data.Repo.Movies
                 {
                     DynamicParameters param = new DynamicParameters();
                     param.Add("@Name", item.Name);
+                    param.Add("@iso", item.iso_3166_1);
 
                     string query = $@"
-                    DECLARE  @result table(ID Int, Name nvarchar(MAX))
-                    IF EXISTS(SELECT * from ProductionCountries where Name like @Name)   
+                    DECLARE  @result table(ID Int, Name nvarchar(MAX), iso_3166_1 nvarchar(5))
+                    IF EXISTS(SELECT * from ProductionCountries where Name = @Name)   
                     BEGIN            
                     UPDATE ProductionCountries
-                                SET Name = @Name
+                                SET Name = @Name, iso_3166_1 = @iso
 							    OUTPUT INSERTED.* INTO @result
-                                WHERE Name like @Name;
+                                WHERE Name = @Name;
                     END                    
                     ELSE            
                     BEGIN  
-                    INSERT INTO ProductionCountries (Name)
+                    INSERT INTO ProductionCountries (Name, iso_3166_1)
                                  OUTPUT INSERTED.* INTO @result
-                                 VALUES (@Name)
+                                 VALUES (@Name, @iso)
                     END
                     SELECT *
 				    FROM @result";

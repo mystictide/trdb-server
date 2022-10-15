@@ -39,7 +39,7 @@ namespace trdb.business.Movies.Junctions
             return await _repo.GetAll();
         }
 
-        public async Task<List<MovieProductionCompanyJunction>> Manage(List<ProductionCompanies> entity, int MovieID)
+        public async Task<List<ProductionCompanies>> Manage(List<ProductionCompanies> entity, int MovieID)
         {
             return await _repo.Manage(entity, MovieID);
         }

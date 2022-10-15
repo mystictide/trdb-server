@@ -5,6 +5,6 @@ namespace trdb.data.Interface.Movies.Junctions
 {
     public interface IMovieGenreJunction : IBaseInterface<MovieGenreJunction>
     {
-        Task<List<MovieGenreJunction>> Manage(List<MovieGenres> entity, int MovieID);
+        Task<List<MovieGenres>> Manage(List<MovieGenres> entity, int MovieID);
     }
 }

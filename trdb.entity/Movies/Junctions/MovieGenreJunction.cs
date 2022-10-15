@@ -9,8 +9,5 @@ namespace trdb.entity.Movies.Junctions
         public int ID { get; set; }
         public int MovieID { get; set; }
         public int GenreID { get; set; }
-
-        [Write(false)]
-        public string Name { get; set; }
     }
 }

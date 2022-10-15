@@ -13,5 +13,9 @@ namespace trdb.entity.Movies
         public int TMDB_ID { get; set; }
         [JsonProperty("name")]
         public string Name { get; set; }
+
+        [Write(false)]
+        [JsonProperty("genres")]
+        public List<MovieGenres> List { get; set; }
     }
 }

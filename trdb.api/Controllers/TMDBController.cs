@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using RestSharp;
 using trdb.api.Helpers;
+using trdb.business.Movies;
+using trdb.entity.Movies;
 
 namespace trdb.api.Controllers
 {
@@ -23,17 +24,81 @@ namespace trdb.api.Controllers
         #endregion
 
         #region Import
+
         [HttpPost]
-        [Route("import/genre")]
+        [Route("import/genres")]
         public async Task<IActionResult> ImportGenres()
         {
             try
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
+                    var url = "https://api.themoviedb.org/3/genre/movie/list?api_key=" + tmdb_key + "&language=en-US";
+                    var response = await CustomHelpers.SendRequest(url, Method.Get);
 
+                    if (CustomHelpers.IsResponseSuccessful(response))
+                    {
+                        var genres = MovieHelpers.FormatTMDBGenresResponse(response);
+                        var import = await new MovieGenreManager().Import(genres.List);
+                        return Ok(import);
+                    }
                 }
-                return Ok("");
+
+                return StatusCode(500, "Authorization failed");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("import/langs")]
+        public async Task<IActionResult> ImportLanguages()
+        {
+            try
+            {
+                if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
+                {
+                    var url = "https://api.themoviedb.org/3/configuration/languages?api_key=" + tmdb_key;
+                    var response = await CustomHelpers.SendRequest(url, Method.Get);
+
+                    if (CustomHelpers.IsResponseSuccessful(response))
+                    {
+                        var langs = MovieHelpers.FormatTMDBLanguagesResponse(response);
+                        var import = await new LanguageManager().Import(langs);
+                        return Ok(import);
+                    }
+                }
+
+                return StatusCode(500, "Authorization failed");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("import/countries")]
+        public async Task<IActionResult> ImportCountries()
+        {
+            try
+            {
+                if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
+                {
+                    var url = "https://api.themoviedb.org/3/configuration/countries?api_key=" + tmdb_key;
+                    var response = await CustomHelpers.SendRequest(url, Method.Get);
+
+                    if (CustomHelpers.IsResponseSuccessful(response))
+                    {
+                        var countries = MovieHelpers.FormatTMDBCountryResponse(response);
+                        var import = await new ProductionCountryManager().Import(countries);
+                        return Ok(import);
+                    }
+                }
+
+                return StatusCode(500, "Authorization failed");
             }
             catch (Exception ex)
             {
@@ -49,21 +114,28 @@ namespace trdb.api.Controllers
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var url = "https://api.themoviedb.org/3/movie/2?api_key=" + tmdb_key;
-                    var client = new RestClient(url);
-                    var request = new RestRequest(url, Method.Get);
-                    RestResponse response = await client.ExecuteAsync(request);
-                    var jsonResponse = JsonConvert.DeserializeObject(response.Content);
-                    dynamic data = JsonConvert.DeserializeObject<dynamic>(response.Content);
+                    var import = new Movies();
+                    var movieID = await new MovieManager().GetLatestMovie() + 1;
 
-                    if (CustomHelpers.IsResponseSuccessful(data))
+                    while (import.TMDB_ID < 1)
                     {
-                        var movieData = MovieHelpers.FormatTMDBResponse(jsonResponse.ToString());
-                        return Ok(movieData);
+                        var url = "https://api.themoviedb.org/3/movie/" + 2 + "?api_key=" + tmdb_key;
+                        var response = await CustomHelpers.SendRequest(url, Method.Get);
+
+                        if (CustomHelpers.IsResponseSuccessful(response))
+                        {
+                            var movieData = MovieHelpers.FormatTMDBMovieResponse(response);
+                            import = await new MovieManager().Import(movieData);
+                        }
+                        else
+                        {
+                            movieID++;
+                        }
                     }
+                    return Ok(import);
                 }
 
-                return Ok();
+                return StatusCode(500, "Authorization failed");
             }
             catch (Exception ex)
             {

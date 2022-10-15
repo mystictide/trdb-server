@@ -5,7 +5,7 @@ using trdb.entity.Movies;
 
 namespace trdb.business.Movies
 {
-    internal class ProductionCountryManager : IProductionCountries
+    public class ProductionCountryManager : IProductionCountries
     {
         private readonly IProductionCountries _repo;
         public ProductionCountryManager()
