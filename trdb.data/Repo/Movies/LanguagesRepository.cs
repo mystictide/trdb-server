@@ -134,6 +134,32 @@ namespace trdb.data.Repo.Movies
             }
         }
 
+        public async Task<List<Languages>> GetMovieLanguages(int MovieID)
+        {
+            try
+            {
+                DynamicParameters param = new DynamicParameters();
+                param.Add("@MovieID", MovieID);
+
+                string query = $@"
+                SELECT * FROM Languages as l
+                WHERE l.ID in 
+                (Select LanguageID from MovieLanguageJunction ml where ml.MovieID = @MovieID)
+                ORDER BY ID ASC";
+
+                using (var con = GetConnection)
+                {
+                    var result = await con.QueryAsync<Languages>(query, param);
+                    return result.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return null;
+            }
+        }
+
         public async Task<List<Languages>> Import(List<Languages> entity)
         {
             var result = new List<Languages>();

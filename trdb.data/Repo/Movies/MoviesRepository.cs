@@ -3,6 +3,8 @@ using Dapper;
 using trdb.data.Interface.Movies;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
+using trdb.entity.Movies;
+using trdb.data.Repo.MovieGenres;
 
 namespace trdb.data.Repo.Movies
 {
@@ -61,8 +63,7 @@ namespace trdb.data.Repo.Movies
                 param.Add("@Keyword", request.filter.Keyword);
                 param.Add("@PageSize", request.filter.pageSize);
 
-                string WhereClause = @" WHERE (t.Name like '%' + @Keyword + '%')";
-
+                string WhereClause = @" WHERE (t.Title like '%' + @Keyword + '%')";
                 string query_count = $@"  Select Count(t.ID) from Movies t {WhereClause}";
 
                 string query = $@"
@@ -100,13 +101,21 @@ namespace trdb.data.Repo.Movies
 
                 string query = $@"
                 SELECT *
-                FROM Movies 
-                WHERE ID = @ID";
+                FROM Movies t
+                WHERE t.ID = @ID";
 
                 using (var con = GetConnection)
                 {
-                    var res = await con.QueryAsync<entity.Movies.Movies>(query, param);
-                    return res.FirstOrDefault();
+                    var res = await con.QueryFirstOrDefaultAsync<entity.Movies.Movies>(query, param);
+                    var mgenres = await new MovieGenresRepository().GetMovieGenres(res.ID);
+                    var mlanguages = await new LanguagesRepository().GetMovieLanguages(res.ID);
+                    var mcompanies = await new ProductionCompaniesRepository().GetMovieCompanies(res.ID);
+                    var mcountries = await new ProductionCountriesRepository().GetMovieCountries(res.ID);
+                    res.Genres = mgenres;
+                    res.Languages = mlanguages;
+                    res.Companies = mcompanies;
+                    res.Countries = mcountries;
+                    return res;
                 }
             }
             catch (Exception ex)

@@ -5,5 +5,6 @@ namespace trdb.data.Interface.Movies
     public interface IProductionCompanies : IBaseInterface<ProductionCompanies>
     {
         Task<List<ProductionCompanies>> Import(List<ProductionCompanies> entity);
+        Task<List<ProductionCompanies>> GetMovieCompanies(int MovieID);
     }
 }

@@ -38,6 +38,11 @@ namespace trdb.business.Movies
             return await _repo.GetAll();
         }
 
+        public async Task<List<Languages>> GetMovieLanguages(int MovieID)
+        {
+            return await _repo.GetMovieLanguages(MovieID);
+        }
+
         public async Task<List<Languages>> Import(List<Languages> entity)
         {
             return await _repo.Import(entity);

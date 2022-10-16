@@ -134,6 +134,32 @@ namespace trdb.data.Repo.Movies
             }
         }
 
+        public async Task<List<ProductionCountries>> GetMovieCountries(int MovieID)
+        {
+            try
+            {
+                DynamicParameters param = new DynamicParameters();
+                param.Add("@MovieID", MovieID);
+
+                string query = $@"
+                SELECT * FROM ProductionCountries as pcc 
+                WHERE pcc.ID in
+                (Select ProductionCountryID from MovieProductionCountryJunction mpc where mpc.MovieID = @MovieID)
+                ORDER BY ID ASC";
+
+                using (var con = GetConnection)
+                {
+                    var result = await con.QueryAsync<ProductionCountries>(query, param);
+                    return result.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return null;
+            }
+        }
+
         public async Task<List<ProductionCountries>> Import(List<ProductionCountries> entity)
         {
             var result = new List<ProductionCountries>();

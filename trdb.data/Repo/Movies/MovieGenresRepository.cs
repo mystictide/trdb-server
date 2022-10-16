@@ -134,6 +134,33 @@ namespace trdb.data.Repo.MovieGenres
             }
         }
 
+        public async Task<List<entity.Movies.MovieGenres>> GetMovieGenres(int MovieID)
+        {
+            try
+            {
+                DynamicParameters param = new DynamicParameters();
+                param.Add("@MovieID", MovieID);
+
+                string query = $@"
+                SELECT * FROM MovieGenres as g 
+                WHERE g.TMDB_ID in
+                (Select GenreID from MovieGenreJunction mg where mg.MovieID = @MovieID)
+                ORDER BY TMDB_ID ASC";
+
+                using (var con = GetConnection)
+                {
+                    var result = await con.QueryAsync<entity.Movies.MovieGenres>(query, param);
+                    return result.ToList();
+                        ;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return null;
+            }
+        }
+
         public async Task<List<entity.Movies.MovieGenres>> Import(List<entity.Movies.MovieGenres> entity)
         {
             var result = new List<entity.Movies.MovieGenres>();

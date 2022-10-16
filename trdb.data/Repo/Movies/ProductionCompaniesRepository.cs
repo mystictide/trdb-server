@@ -134,6 +134,32 @@ namespace trdb.data.Repo.Movies
             }
         }
 
+        public async Task<List<ProductionCompanies>> GetMovieCompanies(int MovieID)
+        {
+            try
+            {
+                DynamicParameters param = new DynamicParameters();
+                param.Add("@MovieID", MovieID);
+
+                string query = $@"
+                SELECT * FROM ProductionCompanies as pc 
+                WHERE pc.TMDB_ID in
+                (Select ProductionCompanyID from MovieProductionCompanyJunction mpc where mpc.MovieID = @MovieID)
+                ORDER BY TMDB_ID ASC";
+
+                using (var con = GetConnection)
+                {
+                    var result = await con.QueryAsync<ProductionCompanies>(query, param);
+                    return result.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return null;
+            }
+        }
+
         public async Task<List<ProductionCompanies>> Import(List<ProductionCompanies> entity)
         {
             var result = new List<ProductionCompanies>();

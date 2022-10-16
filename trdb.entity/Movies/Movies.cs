@@ -34,6 +34,14 @@ namespace trdb.entity.Movies
         [JsonProperty("adult")]
         public bool IsAdult { get; set; }
 
+        public Movies()
+        {
+            Genres = new List<MovieGenres>();
+            Languages = new List<Languages>();
+            Companies = new List<ProductionCompanies>();
+            Countries = new List<ProductionCountries>();
+        }
+
         [Write(false)]
         [JsonProperty("genres")]
         public List<MovieGenres> Genres { get; set; }
