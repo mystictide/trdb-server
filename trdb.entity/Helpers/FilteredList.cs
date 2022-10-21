@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace trdb.entity.Helpers
+﻿namespace trdb.entity.Helpers
 {
     public class FilteredList<T> where T : class
     {

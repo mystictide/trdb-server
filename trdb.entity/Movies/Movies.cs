@@ -1,5 +1,6 @@
 ﻿using Dapper.Contrib.Extensions;
 using Newtonsoft.Json;
+using trdb.entity.Helpers;
 
 namespace trdb.entity.Movies
 {
@@ -7,7 +8,6 @@ namespace trdb.entity.Movies
     public class Movies
     {
         [Key]
-        [JsonIgnore]
         public int ID { get; set; }
         [JsonProperty("id")]
         public int TMDB_ID { get; set; }
@@ -40,6 +40,7 @@ namespace trdb.entity.Movies
             Languages = new List<Languages>();
             Companies = new List<ProductionCompanies>();
             Countries = new List<ProductionCountries>();
+            Credits = new Credits();
         }
 
         [Write(false)]
@@ -53,6 +54,12 @@ namespace trdb.entity.Movies
         public List<ProductionCompanies> Companies { get; set; }
         [Write(false)]
         [JsonProperty("production_countries")]
-        public List<ProductionCountries> Countries { get; set; }
+        public List<ProductionCountries> Countries { get; set; }   
+        //[Write(false)]
+        //[JsonProperty("credits")]
+        //public List<People> People { get; set; }
+        [Write(false)]
+        [JsonProperty("credits")]
+        public Credits Credits { get; set; }
     }
 }

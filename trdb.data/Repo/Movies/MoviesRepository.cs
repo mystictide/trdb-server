@@ -3,7 +3,6 @@ using Dapper;
 using trdb.data.Interface.Movies;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
-using trdb.entity.Movies;
 using trdb.data.Repo.MovieGenres;
 
 namespace trdb.data.Repo.Movies

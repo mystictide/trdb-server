@@ -13,7 +13,15 @@ namespace trdb.api.Helpers
                 var client = new RestClient(url);
                 var request = new RestRequest(url, method);
                 RestResponse response = await client.ExecuteAsync(request);
-                return JsonConvert.DeserializeObject(response.Content).ToString();
+                if (response.StatusCode != System.Net.HttpStatusCode.NotModified)
+                {
+                    return JsonConvert.DeserializeObject(response.Content).ToString();
+                }
+                else
+                {
+                    return null;
+                }
+
             }
             catch (Exception)
             {

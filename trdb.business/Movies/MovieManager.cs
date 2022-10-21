@@ -46,11 +46,15 @@ namespace trdb.business.Movies
         public async Task<entity.Movies.Movies> Import(entity.Movies.Movies entity)
         {
             var companies = await new ProductionCompanyManager().Import(entity.Companies);
+            var cast = await new PeopleManager().Import(entity.Credits.Cast);
+            var crew = await new PeopleManager().Import(entity.Credits.Crew);
             var movie = await _repo.Import(entity);
             movie.Genres = await new MovieGenreJunctionManager().Manage(entity.Genres, movie.ID);
             movie.Languages = await new MovieLanguageJunctionManager().Manage(entity.Languages, movie.ID);
             movie.Companies = await new MovieProductionCompanyJunctionManager().Manage(companies, movie.ID);
             movie.Countries = await new MovieProductionCountryJunctionManager().Manage(entity.Countries, movie.ID);
+            movie.Credits.Cast = await new MovieCreditsJunctionManager().Manage(entity.Credits.Cast, movie.ID);
+            movie.Credits.Crew = await new MovieCreditsJunctionManager().Manage(entity.Credits.Crew, movie.ID);
             return movie;
         }
 

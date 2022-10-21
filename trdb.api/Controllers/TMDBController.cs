@@ -4,7 +4,6 @@ using trdb.api.Helpers;
 using trdb.business.Movies;
 using trdb.entity.Helpers;
 using trdb.entity.Movies;
-using trdb.entity.Users;
 
 namespace trdb.api.Controllers
 {
@@ -23,6 +22,87 @@ namespace trdb.api.Controllers
         private static string tmdb_key = "c33e76a04be19de0f46ae6301aec3a6a";
 
         #region Get
+
+        [HttpGet]
+        [Route("get/genre")]
+        public async Task<IActionResult> GetGenre([FromQuery] int ID)
+        {
+            try
+            {
+                if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
+                {
+                    var result = await new MovieGenreManager().Get(ID);
+                    return Ok(result);
+                }
+
+                return StatusCode(500, "Authorization failed");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("get/language")]
+        public async Task<IActionResult> GetLanguage([FromQuery] int ID)
+        {
+            try
+            {
+                if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
+                {
+                    var result = await new LanguageManager().Get(ID);
+                    return Ok(result);
+                }
+
+                return StatusCode(500, "Authorization failed");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("get/company")]
+        public async Task<IActionResult> GetCompany([FromQuery] int ID)
+        {
+            try
+            {
+                if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
+                {
+                    var result = await new ProductionCompanyManager().Get(ID);
+                    return Ok(result);
+                }
+
+                return StatusCode(500, "Authorization failed");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("get/country")]
+        public async Task<IActionResult> GetCountry([FromQuery] int ID)
+        {
+            try
+            {
+                if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
+                {
+                    var result = await new ProductionCountryManager().Get(ID);
+                    return Ok(result);
+                }
+
+                return StatusCode(500, "Authorization failed");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         [HttpGet]
         [Route("get/movie")]
         public async Task<IActionResult> GetMovie([FromQuery] int ID)
@@ -42,10 +122,38 @@ namespace trdb.api.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
         #endregion
 
-
         #region List
+
+        [HttpGet]
+        [Route("list/people")]
+        public async Task<IActionResult> ListPeople([FromQuery] Filter filter)
+        {
+            try
+            {
+                if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
+                {
+                    var filterModel = new People();
+                    filter.pageSize = 20;
+                    filter.isDetailSearch = false;
+                    FilteredList<People> request = new FilteredList<People>()
+                    {
+                        filter = filter,
+                        filterModel = filterModel,
+                    };
+                    var result = await new PeopleManager().FilteredList(request);
+                    return Ok(result);
+                }
+
+                return StatusCode(500, "Authorization failed");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
 
         [HttpGet]
         [Route("list/genres")]
@@ -288,10 +396,10 @@ namespace trdb.api.Controllers
                         var url = "https://api.themoviedb.org/3/movie/" + movieID + "?api_key=" + tmdb_key;
                         var response = await CustomHelpers.SendRequest(url, Method.Get);
 
-                        if (CustomHelpers.IsResponseSuccessful(response))
+                        if (response != null && CustomHelpers.IsResponseSuccessful(response))
                         {
                             var movieData = MovieHelpers.FormatTMDBMovieResponse(response);
-                            import = await new MovieManager().Import(movieData);
+                            import = await new MovieManager().Import(movieData.Result);
                         }
                         else
                         {

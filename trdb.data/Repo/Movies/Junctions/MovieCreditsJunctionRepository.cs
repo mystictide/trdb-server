@@ -1,14 +1,16 @@
-﻿using Dapper;
-using Dapper.Contrib.Extensions;
-using trdb.data.Interface.Movies;
+﻿using Dapper.Contrib.Extensions;
+using Dapper;
+using trdb.data.Interface.Movies.Junctions;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
+using trdb.entity.Movies.Junctions;
+using trdb.entity.Movies;
 
-namespace trdb.data.Repo.MovieGenres
+namespace trdb.data.Repo.Movies.Junctions
 {
-    public class MovieGenresRepository : Connection.dbConnection, IMovieGenres
+    public class MovieCreditsJunctionRepository : Connection.dbConnection, IMovieCreditsJunction
     {
-        public async Task<entity.Movies.MovieGenres> Add(entity.Movies.MovieGenres entity)
+        public async Task<MovieCreditsJunction> Add(MovieCreditsJunction entity)
         {
             ProcessResult result = new ProcessResult();
             try
@@ -16,7 +18,7 @@ namespace trdb.data.Repo.MovieGenres
                 using (var con = GetConnection)
                 {
                     result.ReturnID = await con.InsertAsync(entity);
-                    result.Message = "Genre saved successfully";
+                    result.Message = "Item saved successfully";
                     result.State = ProcessState.Success;
                     entity.ID = result.ReturnID;
                     return entity;
@@ -37,7 +39,7 @@ namespace trdb.data.Repo.MovieGenres
                 ProcessResult pr = new ProcessResult();
                 try
                 {
-                    await con.DeleteAsync(new entity.Movies.MovieGenres() { ID = ID });
+                    await con.DeleteAsync(new MovieCreditsJunction() { ID = ID });
                     pr.ReturnID = 0;
                     pr.Message = "Success";
                     pr.State = ProcessState.Success;
@@ -52,22 +54,22 @@ namespace trdb.data.Repo.MovieGenres
             }
         }
 
-        public async Task<FilteredList<entity.Movies.MovieGenres>> FilteredList(FilteredList<entity.Movies.MovieGenres> request)
+        public async Task<FilteredList<MovieCreditsJunction>> FilteredList(FilteredList<MovieCreditsJunction> request)
         {
             try
             {
-                FilteredList<entity.Movies.MovieGenres> result = new FilteredList<entity.Movies.MovieGenres>();
+                FilteredList<MovieCreditsJunction> result = new FilteredList<MovieCreditsJunction>();
                 DynamicParameters param = new DynamicParameters();
                 param.Add("@Keyword", request.filter.Keyword);
                 param.Add("@PageSize", request.filter.pageSize);
 
                 string WhereClause = @" WHERE (t.Name like '%' + @Keyword + '%')";
 
-                string query_count = $@"  Select Count(t.ID) from MovieGenres t {WhereClause}";
+                string query_count = $@"  Select Count(t.ID) from MovieCreditsJunction t {WhereClause}";
 
                 string query = $@"
                 SELECT *
-                FROM MovieGenres t
+                FROM MovieCreditsJunction t
                 {WhereClause} 
                 ORDER BY t.ID ASC 
                 OFFSET @StartIndex ROWS
@@ -78,7 +80,7 @@ namespace trdb.data.Repo.MovieGenres
                     result.totalItems = await con.QueryFirstOrDefaultAsync<int>(query_count, param);
                     request.filter.pager = new Page(result.totalItems, request.filter.pageSize, request.filter.page);
                     param.Add("@StartIndex", request.filter.pager.StartIndex);
-                    result.data = await con.QueryAsync<entity.Movies.MovieGenres>(query, param);
+                    result.data = await con.QueryAsync<MovieCreditsJunction>(query, param);
                     result.filter = request.filter;
                     result.filterModel = request.filterModel;
                     return result;
@@ -91,7 +93,7 @@ namespace trdb.data.Repo.MovieGenres
             }
         }
 
-        public async Task<entity.Movies.MovieGenres> Get(int ID)
+        public async Task<MovieCreditsJunction> Get(int ID)
         {
             try
             {
@@ -100,12 +102,12 @@ namespace trdb.data.Repo.MovieGenres
 
                 string query = $@"
                 SELECT *
-                FROM MovieGenres 
+                FROM MovieCreditsJunction 
                 WHERE ID = @ID";
 
                 using (var con = GetConnection)
                 {
-                    var res = await con.QueryAsync<entity.Movies.MovieGenres>(query, param);
+                    var res = await con.QueryAsync<MovieCreditsJunction>(query, param);
                     return res.FirstOrDefault();
                 }
             }
@@ -116,13 +118,13 @@ namespace trdb.data.Repo.MovieGenres
             }
         }
 
-        public async Task<IEnumerable<entity.Movies.MovieGenres>> GetAll()
+        public async Task<IEnumerable<MovieCreditsJunction>> GetAll()
         {
             try
             {
                 using (var con = GetConnection)
                 {
-                    var res = await con.GetAllAsync<entity.Movies.MovieGenres>();
+                    var res = await con.GetAllAsync<MovieCreditsJunction>();
                     return res;
                 }
             }
@@ -133,66 +135,44 @@ namespace trdb.data.Repo.MovieGenres
             }
         }
 
-        public async Task<List<entity.Movies.MovieGenres>> GetMovieGenres(int MovieID)
+        public async Task<List<People>> Manage(List<People> entity, int MovieID)
         {
-            try
-            {
-                DynamicParameters param = new DynamicParameters();
-                param.Add("@MovieID", MovieID);
-
-                string query = $@"
-                SELECT * FROM MovieGenres as g 
-                WHERE g.TMDB_ID in
-                (Select GenreID from MovieGenreJunction mg where mg.MovieID = @MovieID)
-                ORDER BY TMDB_ID ASC";
-
-                using (var con = GetConnection)
-                {
-                    var result = await con.QueryAsync<entity.Movies.MovieGenres>(query, param);
-                    return result.ToList();
-                        ;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogsRepository.CreateLog(ex);
-                return null;
-            }
-        }
-
-        public async Task<List<entity.Movies.MovieGenres>> Import(List<entity.Movies.MovieGenres> entity)
-        {
-            var result = new List<entity.Movies.MovieGenres>();
+            var result = new List<People>();
             foreach (var item in entity)
             {
                 try
                 {
                     DynamicParameters param = new DynamicParameters();
-                    param.Add("@TMDB_ID", item.TMDB_ID);
-                    param.Add("@Name", item.Name);
+                    param.Add("@MovieID", MovieID);
+                    param.Add("@PersonID", item.TMDB_ID);
+                    param.Add("@Character", item.Character);
+                    param.Add("@Department", item.Department);
+                    param.Add("@Job", item.Job);
+                    param.Add("@ListOrder", item.ListOrder);
 
                     string query = $@"
-                    DECLARE  @result table(ID Int, TMDB_ID Int, Name nvarchar(100))
-                    IF EXISTS(SELECT * from MovieGenres where TMDB_ID = @TMDB_ID)        
+                    DECLARE  @result table(ID Int, MovieID Int, PersonID Int, Character nvarchar(MAX), Department nvarchar(250), Job nvarchar(250), ListOrder Int)
+                    IF EXISTS(SELECT * from MovieCreditsJunction where MovieID = @MovieID AND PersonID = @PersonID)        
                     BEGIN            
-                    UPDATE MovieGenres
-                                SET TMDB_ID = @TMDB_ID, Name = @Name
+                    UPDATE MovieCreditsJunction
+                                SET MovieID = @MovieID, PersonID = @PersonID, Character = @Character, Department = @Department, Job = @Job, ListOrder = @ListOrder
 							    OUTPUT INSERTED.* INTO @result
-                                WHERE TMDB_ID = @TMDB_ID;
+                                WHERE MovieID = @MovieID AND PersonID = @PersonID;
                     END                    
                     ELSE            
                     BEGIN  
-                    INSERT INTO MovieGenres (TMDB_ID, Name)
+                    INSERT INTO MovieCreditsJunction (MovieID, PersonID, Character, Department, Job, ListOrder)
                                  OUTPUT INSERTED.* INTO @result
-                                 VALUES (@TMDB_ID, @Name)
+                                 VALUES (@MovieID, @PersonID, @Character, @Department, @Job, @ListOrder)
                     END
                     SELECT *
 				    FROM @result";
 
                     using (var con = GetConnection)
                     {
-                        var res = await con.QueryFirstOrDefaultAsync<entity.Movies.MovieGenres>(query, param);
-                        result.Add(res);
+                        var res = await con.QueryFirstOrDefaultAsync<MovieCreditsJunction>(query, param);
+                        item.ID = res.ID;
+                        result.Add(item);
                     }
                 }
                 catch (Exception ex)
@@ -203,7 +183,7 @@ namespace trdb.data.Repo.MovieGenres
             return result;
         }
 
-        public async Task<ProcessResult> Update(entity.Movies.MovieGenres entity)
+        public async Task<ProcessResult> Update(MovieCreditsJunction entity)
         {
             ProcessResult result = new ProcessResult();
             try
@@ -214,7 +194,7 @@ namespace trdb.data.Repo.MovieGenres
                     if (res == true)
                     {
                         result.ReturnID = entity.ID;
-                        result.Message = "Genre updated successfully.";
+                        result.Message = "Item updated successfully.";
                         result.State = ProcessState.Success;
                     }
                 }

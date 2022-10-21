@@ -7,7 +7,6 @@ namespace trdb.entity.Movies
     public class ProductionCountries
     {
         [Key]
-        [JsonIgnore]
         public int ID { get; set; }
         [JsonProperty("name")]
         public string Name { get; set; }
