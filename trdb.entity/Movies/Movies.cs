@@ -54,12 +54,15 @@ namespace trdb.entity.Movies
         public List<ProductionCompanies> Companies { get; set; }
         [Write(false)]
         [JsonProperty("production_countries")]
-        public List<ProductionCountries> Countries { get; set; }   
+        public List<ProductionCountries> Countries { get; set; }
         //[Write(false)]
         //[JsonProperty("credits")]
         //public List<People> People { get; set; }
         [Write(false)]
         [JsonProperty("credits")]
         public Credits Credits { get; set; }
+        [Write(false)]
+        [JsonProperty("expires")]
+        public DateTime WeeklyExpiryDate { get; set; }
     }
 }
