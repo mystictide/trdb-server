@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Dapper.Contrib.Extensions;
+using System.Threading.Tasks;
 using trdb.data.Interface.User;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
@@ -14,14 +15,31 @@ namespace trdb.data.Repo.User
             ProcessResult result = new ProcessResult();
             try
             {
+                DynamicParameters param = new DynamicParameters();
+                param.Add("@Email", entity.Email);
+                param.Add("@Username", entity.Username);
+                param.Add("@Password", entity.Password);
+                param.Add("@AuthType", entity.AuthType);
+                param.Add("@IsActive", entity.IsActive);
+
+                string query = $@"
+                DECLARE  @result table(ID Int, Email nvarchar(MAX), Username nvarchar(100), Password nvarchar(MAX), AuthType Int, IsActive bit)
+	                    INSERT INTO Users (Email, Username, Password, AuthType, IsActive)
+	                        OUTPUT INSERTED.* INTO @result
+	                        VALUES ('', 'test', '', 2, 1)
+	                    INSERT INTO UserSettingsJunction (UserID, Bio, Picture, Website, IsDMAllowed, IsPublic, IsAdult)
+	                        VALUES ((SELECT ID FROM @result), '', NULL, '', 0, 1, 0)
+                SELECT *
+                FROM @result t
+                LEFT JOIN UserSettingsJunction s on s.UserID = t.ID";
+
                 using (var con = GetConnection)
-                { 
-                    result.ReturnID = await con.InsertAsync(entity);
-                    result.Message = "User saved successfully";
-                    result.State = ProcessState.Success;
-                    var user = new Users();
-                    user.ID = result.ReturnID;
-                    return user;
+                {
+                    var res = await con.QueryAsync<Users, UserSettings, Users>(query, (a, b) =>
+                    {
+                        a.Settings = b; return a;
+                    }, param, splitOn: "ID");
+                    return res.FirstOrDefault();
                 }
             }
             catch (Exception ex)
@@ -44,11 +62,15 @@ namespace trdb.data.Repo.User
                 string query = $@"
                 SELECT *
                 FROM Users t
+                LEFT JOIN UserSettingsJunction s on s.UserID = t.ID
                 {WhereClause}";
 
-                using (var connection = GetConnection)
+                using (var con = GetConnection)
                 {
-                    var res = await connection.QueryAsync<Users>(query, param);
+                    var res = await con.QueryAsync<Users, UserSettings, Users>(query, (a, b) =>
+                    {
+                        a.Settings = b; return a;
+                    }, param, splitOn: "ID");
                     return res.FirstOrDefault();
                 }
             }
@@ -136,7 +158,40 @@ namespace trdb.data.Repo.User
             }
         }
 
-        public async Task<Users>? Get(int ID)
+        public async Task<Users>? Get(int? ID, string? Username)
+        {
+            try
+            {
+                DynamicParameters param = new DynamicParameters();
+                param.Add("@ID", ID);
+                param.Add("@Username", Username);
+
+                string WhereClause = @" WHERE t.ID = @ID OR (t.Username like '%' + @Username + '%')";
+
+                string query = $@"
+                SELECT *
+                FROM Users t
+                LEFT JOIN UserSettingsJunction usj ON usj.UserID = t.ID
+                {WhereClause}";
+
+                using (var con = GetConnection)
+                {
+                    var res = await con.QueryAsync<Users, UserSettings, Users>(query, (user, settings) =>
+                    {
+                        user.Settings = settings;
+                        return user;
+                    }, param, splitOn: "ID");
+                    return res.FirstOrDefault();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return null;
+            }
+        }
+
+        public async Task<List<Users>>? GetFollowing(int ID)
         {
             try
             {
@@ -144,14 +199,82 @@ namespace trdb.data.Repo.User
                 param.Add("@ID", ID);
 
                 string query = $@"
-                SELECT ID, Username, Email, AuthType, IsActive
-                FROM Users 
-                WHERE ID = @ID";
+                SELECT t.ID, t.Username, usj.Picture, usj.IsPublic
+                FROM Users t
+                LEFT JOIN UserSettingsJunction usj ON usj.UserID = t.ID
+                WHERE t.ID in 
+                (select UserID from UserFollowsJunction where FollowerID = @ID)";
 
-                using (var connection = GetConnection)
+                using (var con = GetConnection)
                 {
-                    var res = await connection.QueryAsync<Users>(query, param);
-                    return res.FirstOrDefault();
+                    var res = await con.QueryAsync<Users, UserSettings, Users>(query, (user, settings) =>
+                    {
+                        user.Settings = settings;
+                        return user;
+                    }, param, splitOn: "Picture");
+                    return res.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return null;
+            }
+        }
+
+        public async Task<List<Users>>? GetFollowers(int ID)
+        {
+            try
+            {
+                DynamicParameters param = new DynamicParameters();
+                param.Add("@ID", ID);
+
+                string query = $@"
+                SELECT t.ID, t.Username, usj.Picture, usj.IsPublic
+                FROM Users t
+                LEFT JOIN UserSettingsJunction usj ON usj.UserID = t.ID
+                WHERE t.ID in 
+                (select FollowerID from UserFollowsJunction where UserID = @ID)";
+
+                using (var con = GetConnection)
+                {
+                    var res = await con.QueryAsync<Users, UserSettings, Users>(query, (user, settings) =>
+                    {
+                        user.Settings = settings;
+                        return user;
+                    }, param, splitOn: "Picture");
+                    return res.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return null;
+            }
+        }
+
+        public async Task<List<Users>>? GetBlocklist(int ID)
+        {
+            try
+            {
+                DynamicParameters param = new DynamicParameters();
+                param.Add("@ID", ID);
+
+                string query = $@"
+                SELECT t.ID, t.Username, usj.Picture, usj.IsPublic
+                FROM Users t
+                LEFT JOIN UserSettingsJunction usj ON usj.UserID = t.ID
+                WHERE t.ID in 
+                (select UserID from UserBlocklistJunction where BlockerID = @ID)";
+
+                using (var con = GetConnection)
+                {
+                    var res = await con.QueryAsync<Users, UserSettings, Users>(query, (user, settings) =>
+                    {
+                        user.Settings = settings;
+                        return user;
+                    }, param, splitOn: "Picture");
+                    return res.ToList();
                 }
             }
             catch (Exception ex)

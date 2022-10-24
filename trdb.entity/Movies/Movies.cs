@@ -55,9 +55,6 @@ namespace trdb.entity.Movies
         [Write(false)]
         [JsonProperty("production_countries")]
         public List<ProductionCountries> Countries { get; set; }
-        //[Write(false)]
-        //[JsonProperty("credits")]
-        //public List<People> People { get; set; }
         [Write(false)]
         [JsonProperty("credits")]
         public Credits Credits { get; set; }

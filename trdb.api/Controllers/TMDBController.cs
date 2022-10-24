@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using RestSharp;
+﻿using RestSharp;
+using Microsoft.AspNetCore.Mvc;
 using trdb.api.Helpers;
 using trdb.business.Movies;
 using trdb.entity.Helpers;
@@ -19,7 +19,6 @@ namespace trdb.api.Controllers
         }
 
         private static int AuthorizedAuthType = 3;
-        private static string tmdb_key = "c33e76a04be19de0f46ae6301aec3a6a";
 
         #region Get
 
@@ -307,7 +306,7 @@ namespace trdb.api.Controllers
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var url = "https://api.themoviedb.org/3/genre/movie/list?api_key=" + tmdb_key + "&language=en-US";
+                    var url = "https://api.themoviedb.org/3/genre/movie/list?api_key=" + CustomHelpers.tmdb_key + "&language=en-US";
                     var response = await CustomHelpers.SendRequest(url, Method.Get);
 
                     if (CustomHelpers.IsResponseSuccessful(response))
@@ -334,7 +333,7 @@ namespace trdb.api.Controllers
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var url = "https://api.themoviedb.org/3/configuration/languages?api_key=" + tmdb_key;
+                    var url = "https://api.themoviedb.org/3/configuration/languages?api_key=" + CustomHelpers.tmdb_key;
                     var response = await CustomHelpers.SendRequest(url, Method.Get);
 
                     if (CustomHelpers.IsResponseSuccessful(response))
@@ -361,7 +360,7 @@ namespace trdb.api.Controllers
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var url = "https://api.themoviedb.org/3/configuration/countries?api_key=" + tmdb_key;
+                    var url = "https://api.themoviedb.org/3/configuration/countries?api_key=" + CustomHelpers.tmdb_key;
                     var response = await CustomHelpers.SendRequest(url, Method.Get);
 
                     if (CustomHelpers.IsResponseSuccessful(response))
@@ -382,24 +381,27 @@ namespace trdb.api.Controllers
 
         [HttpPost]
         [Route("import/movie")]
-        public async Task<IActionResult> ImportMovies()
+        public async Task<IActionResult> ImportMovies([FromQuery] int? movieID)
         {
             try
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
                     var import = new Movies();
-                    var movieID = await new MovieManager().GetLatestMovie() + 1;
+                    if (movieID == null)
+                    {
+                        movieID = await new MovieManager().GetLatestMovie() + 1;
+                    }
 
                     while (import.TMDB_ID < 1)
                     {
-                        var url = "https://api.themoviedb.org/3/movie/" + movieID + "?api_key=" + tmdb_key;
+                        var url = "https://api.themoviedb.org/3/movie/" + movieID + "?api_key=" + CustomHelpers.tmdb_key;
                         var response = await CustomHelpers.SendRequest(url, Method.Get);
 
                         if (response != null && CustomHelpers.IsResponseSuccessful(response))
                         {
-                            var movieData = MovieHelpers.FormatTMDBMovieResponse(response);
-                            import = await new MovieManager().Import(movieData.Result);
+                            var movieData = await MovieHelpers.FormatTMDBMovieResponse(response);
+                            import = await new MovieManager().Import(movieData);
                         }
                         else
                         {

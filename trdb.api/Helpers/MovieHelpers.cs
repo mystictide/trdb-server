@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using RestSharp;
+using trdb.api.Models;
 using trdb.entity.Helpers;
 using trdb.entity.Movies;
 
@@ -7,7 +8,6 @@ namespace trdb.api.Helpers
 {
     public class MovieHelpers
     {
-        private static string tmdb_key = "c33e76a04be19de0f46ae6301aec3a6a";
         public static MovieGenres FormatTMDBGenresResponse(string jsonString)
         {
             try
@@ -55,11 +55,39 @@ namespace trdb.api.Helpers
                 return null;
             }
         }
+
+        public static async Task<MovieReturn> FormatTMDBSimpleMovieResponse(string jsonString)
+        {
+            try
+            {
+                var movie = JsonConvert.DeserializeObject<MovieReturn>(jsonString);
+                return movie;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public static async Task<List<MovieReturn>> FormatTMDBSimpleMovieListResponse(string jsonString)
+        {
+            try
+            {
+                var response = JsonConvert.DeserializeObject<TMDB_Pager>(jsonString);
+                var movies = CustomHelpers.CastObjectsAsSimpleMovies(response.results);
+                return movies;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
         public static async Task<Credits> FormatTMDBCreditsResponse(int MovieID)
         {
             try
             {
-                var url = "https://api.themoviedb.org/3/movie/+" + MovieID + "/credits?api_key=" + tmdb_key + "&language=en-US";
+                var url = "https://api.themoviedb.org/3/movie/+" + MovieID + "/credits?api_key=" + CustomHelpers.tmdb_key + "&language=en-US";
                 var response = await CustomHelpers.SendRequest(url, Method.Get);
                 var credits = JsonConvert.DeserializeObject<Credits>(response);
                 return credits;

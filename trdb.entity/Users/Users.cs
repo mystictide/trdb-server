@@ -15,5 +15,13 @@ namespace trdb.entity.Users
 
         [Write(false)]
         public string? Token { get; set; }
+        [Write(false)]
+        public UserSettings? Settings { get; set; }
+        [Write(false)]
+        public List<Users>? Following { get; set; }
+        [Write(false)]
+        public List<Users>? Followers { get; set; }
+        [Write(false)]
+        public List<Users>? Blocklist{ get; set; }
     }
 }

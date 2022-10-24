@@ -11,7 +11,10 @@ namespace trdb.data.Interface.User
         Task<Users>? Register(Users entity);
         Task<ProcessResult> Update(Users entity);
         Task<ProcessResult> Delete(int ID);
-        Task<Users>? Get(int ID);
+        Task<Users>? Get(int? ID, string? Username);
+        Task<List<Users>>? GetFollowing(int ID);
+        Task<List<Users>>? GetFollowers(int ID);
+        Task<List<Users>>? GetBlocklist(int ID);
         Task<ProcessResult>? UpdateUsername(int ID, string Username);
         Task<ProcessResult>? UpdatePassword(int ID, string Password);
         Task<ProcessResult>? UpdateEmail(int ID, string Email);

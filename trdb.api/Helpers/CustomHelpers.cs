@@ -1,11 +1,14 @@
 ﻿using Newtonsoft.Json;
 using RestSharp;
 using trdb.api.Models;
+using trdb.entity.Movies;
+using trdb.entity.Users;
 
 namespace trdb.api.Helpers
 {
     public class CustomHelpers
     {
+        public static string tmdb_key = "c33e76a04be19de0f46ae6301aec3a6a";
         public static async Task<string> SendRequest(string url, Method method)
         {
             try
@@ -44,6 +47,25 @@ namespace trdb.api.Helpers
             {
                 return true;
             }
+        }
+
+        public static WeeklyReturn CastMovieAsWeekly(Movies obj)
+        {
+            return JsonConvert.DeserializeObject<WeeklyReturn>(JsonConvert.SerializeObject(obj));
+        }
+        public static List<Movies> CastObjectsAsMovies(List<object> obj)
+        {
+            return JsonConvert.DeserializeObject<List<Movies>>(JsonConvert.SerializeObject(obj));
+        }
+
+        public static List<UserReturn> CastUsersAsUserReturns(List<Users> obj)
+        {
+            return JsonConvert.DeserializeObject<List<UserReturn>>(JsonConvert.SerializeObject(obj));
+        }
+
+        public static List<MovieReturn> CastObjectsAsSimpleMovies(List<object> obj)
+        {
+            return JsonConvert.DeserializeObject<List<MovieReturn>>(JsonConvert.SerializeObject(obj));
         }
     }
 }

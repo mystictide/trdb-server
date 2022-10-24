@@ -65,6 +65,7 @@ namespace trdb.business.Users
                 var user = new entity.Users.Users();
                 user.Username = entity.Username;
                 user.Token = generateToken(result);
+                user.Settings = result.Settings;
                 return user;
             }
             throw new Exception("Server error.");
@@ -84,6 +85,7 @@ namespace trdb.business.Users
                 var user = new entity.Users.Users();
                 user.Username = result.Username;
                 user.Token = generateToken(result);
+                user.Settings = result.Settings;
                 return user;
             }
 
@@ -110,9 +112,25 @@ namespace trdb.business.Users
             return await _repo.Delete(ID);
         }
 
-        public async Task<entity.Users.Users>? Get(int ID)
+
+        public async Task<entity.Users.Users>? Get(int? ID, string? Username)
         {
-            return await _repo.Get(ID);
+            return await _repo.Get(ID, Username);
+        }
+
+        public async Task<List<entity.Users.Users>>? GetFollowers(int ID)
+        {
+            return await _repo.GetFollowers(ID);
+        }
+
+        public async Task<List<entity.Users.Users>>? GetFollowing(int ID)
+        {
+            return await _repo.GetFollowing(ID);
+        }
+
+        public async Task<List<entity.Users.Users>>? GetBlocklist(int ID)
+        {
+            return await _repo.GetBlocklist(ID);
         }
 
         public async Task<ProcessResult>? Update(entity.Users.Users entity)
