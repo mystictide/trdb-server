@@ -6,7 +6,7 @@ using trdb.entity.Users;
 namespace trdb.api.Controllers
 {
     [ApiController]
-    [Route("user")]
+    [Route("users")]
     public class UserController : Controller
     {
         private readonly ILogger<UserController> _logger;
@@ -16,6 +16,52 @@ namespace trdb.api.Controllers
             _logger = logger;
         }
 
+
+        #region interactions
+        #endregion
+
+        [HttpPost]
+        [Route("follow")]
+        public async Task<IActionResult> FollowUser([FromBody] int targetID)
+        {
+            try
+            {
+                if (AuthHelpers.Authorize(HttpContext, 1))
+                {
+                    var result = await new UserManager().Follow(targetID, AuthHelpers.CurrentUserID(HttpContext));
+                    return Ok(result);
+                }
+
+                return StatusCode(500, "Authorization failed");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("block")]
+        public async Task<IActionResult> BlockUser([FromBody] int targetID)
+        {
+            try
+            {
+                if (AuthHelpers.Authorize(HttpContext, 1))
+                {
+                    var result = await new UserManager().Block(targetID, AuthHelpers.CurrentUserID(HttpContext));
+                    return Ok(result);
+                }
+
+                return StatusCode(500, "Authorization failed");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        #region get 
+
         [HttpGet]
         [Route("get/user")]
         public async Task<IActionResult> GetUser([FromQuery] int? UserID, [FromQuery] string? Username)
@@ -24,6 +70,7 @@ namespace trdb.api.Controllers
             {
                 var data = await new UserManager().Get(UserID, Username);
                 var user = new UserReturn();
+                user.ID = data.ID;
                 user.Username = data.Username;
                 user.Token = data.Token;
                 user.Settings = data.Settings;
@@ -82,5 +129,7 @@ namespace trdb.api.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        #endregion
     }
 }

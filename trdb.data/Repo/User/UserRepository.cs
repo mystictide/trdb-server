@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using Dapper.Contrib.Extensions;
-using System.Threading.Tasks;
 using trdb.data.Interface.User;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
@@ -81,14 +80,28 @@ namespace trdb.data.Repo.User
             }
         }
 
-        public async Task<bool> CheckEmail(string Email)
+        public async Task<bool> CheckEmail(string Email, int? UserID)
         {
-            string Query = @"
-            SELECT CASE WHEN COUNT(ID) > 0 THEN 1 ELSE 0 END
-            FROM Users 
-            WHERE Email = @Email";
             DynamicParameters param = new DynamicParameters();
+            param.Add("@UserID", UserID);
             param.Add("@Email", Email);
+
+            string Query;
+            if (UserID.HasValue)
+            {
+                Query = @"
+                SELECT CASE WHEN COUNT(ID) > 0 THEN 1 ELSE 0 END
+                FROM Users 
+                WHERE Email = @Email AND NOT (ID = @UserID)";
+            }
+            else
+            {
+                Query = @"
+                SELECT CASE WHEN COUNT(ID) > 0 THEN 1 ELSE 0 END
+                FROM Users 
+                WHERE Email = @Email";
+            }
+
             using (var con = GetConnection)
             {
                 var res = await con.QueryAsync<bool>(Query, param);
@@ -96,14 +109,28 @@ namespace trdb.data.Repo.User
             }
         }
 
-        public async Task<bool> CheckUsername(string Username)
+        public async Task<bool> CheckUsername(string Username, int? UserID)
         {
-            string Query = @"
-            SELECT CASE WHEN COUNT(ID) > 0 THEN 1 ELSE 0 END
-            FROM Users 
-            WHERE Username = @Username";
             DynamicParameters param = new DynamicParameters();
+            param.Add("@UserID", UserID);
             param.Add("@Username", Username);
+
+            string Query;
+            if (UserID.HasValue)
+            {
+                Query = @"
+                SELECT CASE WHEN COUNT(ID) > 0 THEN 1 ELSE 0 END
+                FROM Users 
+                WHERE Username = @Username AND NOT (ID = @UserID)";
+            }
+            else
+            {
+                Query = @"
+                SELECT CASE WHEN COUNT(ID) > 0 THEN 1 ELSE 0 END
+                FROM Users 
+                WHERE Username = @Username";
+            }
+
             using (var con = GetConnection)
             {
                 var res = await con.QueryAsync<bool>(Query, param);
@@ -188,6 +215,68 @@ namespace trdb.data.Repo.User
             {
                 LogsRepository.CreateLog(ex);
                 return null;
+            }
+        }
+
+        public async Task<bool> Follow(int TargetID, int UserID)
+        {
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@TargetID", TargetID);
+            param.Add("@UserID", UserID);
+
+            string Query = @"
+            IF EXISTS(SELECT * from UserFollowsJunction where UserID = @TargetID AND FollowerID = @UserID)        
+            BEGIN            
+	            Delete from UserFollowsJunction WHERE UserID = @TargetID AND FollowerID = @UserID
+            END                    
+            ELSE            
+            BEGIN  
+	            INSERT INTO UserFollowsJunction (UserID, FollowerID, Date)
+	            VALUES (@TargetID, @UserID, GETDATE())
+            END
+            SELECT CASE WHEN EXISTS (
+                SELECT *
+                FROM UserFollowsJunction
+                WHERE UserID = @TargetID AND FollowerID = @UserID
+            )
+            THEN CAST(1 AS BIT)
+            ELSE CAST(0 AS BIT) END";
+
+            using (var con = GetConnection)
+            {
+                var res = await con.QueryAsync<bool>(Query, param);
+                return res.FirstOrDefault();
+            }
+        }
+
+        public async Task<bool> Block(int TargetID, int UserID)
+        {
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@TargetID", TargetID);
+            param.Add("@UserID", UserID);
+
+            string Query = @"
+            IF EXISTS(SELECT * from UserBlocklistJunction where UserID = @TargetID AND BlockerID = @UserID)        
+            BEGIN            
+	            Delete from UserBlocklistJunction WHERE UserID = @TargetID AND BlockerID = @UserID
+            END                    
+            ELSE            
+            BEGIN  
+	            INSERT INTO UserBlocklistJunction (UserID, BlockerID)
+	            VALUES (@TargetID, @UserID)
+            END
+            SELECT CASE WHEN EXISTS (
+                SELECT *
+                FROM UserBlocklistJunction
+                WHERE UserID = @TargetID AND BlockerID = @UserID
+            )
+            THEN CAST(1 AS BIT)
+            ELSE CAST(0 AS BIT) END";
+
+            using (var con = GetConnection)
+            {
+                var res = await con.QueryAsync<bool>(Query, param);
+                return res.FirstOrDefault();
             }
         }
 
@@ -383,6 +472,96 @@ namespace trdb.data.Repo.User
             {
                 LogsRepository.CreateLog(ex);
                 return null;
+            }
+        }
+
+        public async Task<bool> ToggleDMs(int userID)
+        {
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@UserID", userID);
+
+            string query = $@"
+                UPDATE UserSettingsJunction
+                SET IsDMAllowed = ~IsDMAllowed
+                WHERE UserID = @UserID
+                Select IsDMAllowed from UserSettingsJunction where UserID = @UserID";
+
+            using (var con = GetConnection)
+            {
+                var res = await con.QueryFirstAsync<bool>(query, param);
+                return res;
+            }
+        }
+
+        public async Task<bool> TogglePrivacy(int userID)
+        {
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@UserID", userID);
+
+            string query = $@"
+                UPDATE UserSettingsJunction
+                SET IsPublic = ~IsPublic
+                WHERE UserID = @UserID
+                Select IsPublic from UserSettingsJunction where UserID = @UserID";
+
+            using (var con = GetConnection)
+            {
+                var res = await con.QueryFirstAsync<bool>(query, param);
+                return res;
+            }
+        }
+
+        public async Task<bool> ToggleAdultContent(int userID)
+        {
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@UserID", userID);
+
+            string query = $@"
+                UPDATE UserSettingsJunction
+                SET IsAdult = ~IsAdult
+                WHERE UserID = @UserID
+                Select IsAdult from UserSettingsJunction where UserID = @UserID";
+
+            using (var con = GetConnection)
+            {
+                var res = await con.QueryFirstAsync<bool>(query, param);
+                return res;
+            }
+        }
+
+        public async Task<SettingsReturn> UpdatePersonalSettings(SettingsReturn entity, int userID)
+        {
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@UserID", userID);
+            param.Add("@Bio", entity.Bio);
+            param.Add("@Email", entity.Email);
+            param.Add("@Username", entity.Username);
+            param.Add("@Website", entity.Website);
+
+            string query = $@"
+                UPDATE UserSettingsJunction
+                SET  Bio = IsNull(@Bio, Bio),
+	                 Website = IsNull(@Website, Website)
+                WHERE UserID = @UserID
+                IF NOT EXISTS(SELECT * from Users WHERE Email = @Email)
+                UPDATE Users
+	                SET  Email = IsNull(@Email, Email)
+                WHERE ID = @UserID
+                IF NOT EXISTS(SELECT * from Users WHERE Username = @Username)
+                UPDATE Users
+	                SET  Username = IsNull(@Username, Username)
+                WHERE ID = @UserID
+
+                Select Bio, Website  
+                ,(select Email from Users where ID = @UserID) as Email
+                ,(select Username from Users where ID = @UserID) as Username
+                from UserSettingsJunction
+                Where UserID = @UserID";
+
+            using (var con = GetConnection)
+            {
+                var res = await con.QueryFirstAsync<SettingsReturn>(query, param);
+                return res;
             }
         }
     }

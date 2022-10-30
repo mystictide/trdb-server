@@ -137,43 +137,45 @@ namespace trdb.data.Repo.Movies.Junctions
         public async Task<List<entity.Movies.MovieGenres>> Manage(List<entity.Movies.MovieGenres> entity, int MovieID)
         {
             var result = new List<entity.Movies.MovieGenres>();
-            foreach (var item in entity)
+            try
             {
-                try
+                using (var con = GetConnection)
                 {
-                    DynamicParameters param = new DynamicParameters();
-                    param.Add("@MovieID", MovieID);
-                    param.Add("@GenreID", item.TMDB_ID);
-
-                    string query = $@"
-                    DECLARE  @result table(ID Int, MovieID Int, GenreID Int)
-                    IF EXISTS(SELECT * from MovieGenreJunction where MovieID = @MovieID AND GenreID = @GenreID)        
-                    BEGIN            
-                    UPDATE MovieGenreJunction
-                                SET MovieID = @MovieID, GenreID = @GenreID
-							    OUTPUT INSERTED.* INTO @result
-                                WHERE MovieID = @MovieID AND GenreID = @GenreID;
-                    END                    
-                    ELSE            
-                    BEGIN  
-                    INSERT INTO MovieGenreJunction (MovieID, GenreID)
-                                 OUTPUT INSERTED.* INTO @result
-                                 VALUES (@MovieID, @GenreID)
-                    END
-                    SELECT *
-				    FROM @result";
-
-                    using (var con = GetConnection)
+                    foreach (var item in entity)
                     {
+                        DynamicParameters param = new DynamicParameters();
+                        param.Add("@MovieID", MovieID);
+                        param.Add("@GenreID", item.TMDB_ID);
+
+                        string query = $@"
+                        DECLARE  @result table(ID Int, MovieID Int, GenreID Int)
+                        IF EXISTS(SELECT * from MovieGenreJunction where MovieID = @MovieID AND GenreID = @GenreID)        
+                        BEGIN            
+                        UPDATE MovieGenreJunction
+                                    SET MovieID = @MovieID, GenreID = @GenreID
+							        OUTPUT INSERTED.* INTO @result
+                                    WHERE MovieID = @MovieID AND GenreID = @GenreID;
+                        END                    
+                        ELSE            
+                        BEGIN  
+                        INSERT INTO MovieGenreJunction (MovieID, GenreID)
+                                     OUTPUT INSERTED.* INTO @result
+                                     VALUES (@MovieID, @GenreID)
+                        END
+                        SELECT *
+				        FROM @result";
+
+
                         var res = await con.QueryFirstOrDefaultAsync<MovieGenreJunction>(query, param);
                         item.ID = res.ID;
                         result.Add(item);
                     }
+                    con.Dispose();
                 }
-                catch (Exception ex)
-                {
-                    LogsRepository.CreateLog(ex);
-                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
             }
             return result;
         }

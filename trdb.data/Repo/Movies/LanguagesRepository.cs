@@ -163,41 +163,47 @@ namespace trdb.data.Repo.Movies
         public async Task<List<Languages>> Import(List<Languages> entity)
         {
             var result = new List<Languages>();
-            foreach (var item in entity)
+            try
             {
-                try
+                using (var con = GetConnection)
                 {
-                    DynamicParameters param = new DynamicParameters();
-                    param.Add("@Name", item.Name);
-
-                    string query = $@"
-                    DECLARE  @result table(ID Int, Name nvarchar(100))
-                    IF EXISTS(SELECT * from Languages where Name = @Name)        
-                    BEGIN            
-                    UPDATE Languages
-                                SET Name = @Name
-							    OUTPUT INSERTED.* INTO @result
-                                WHERE Name = @Name;
-                    END                    
-                    ELSE            
-                    BEGIN  
-                    INSERT INTO Languages (Name)
-                                 OUTPUT INSERTED.* INTO @result
-                                 VALUES (@Name)
-                    END
-                    SELECT *
-				    FROM @result";
-
-                    using (var con = GetConnection)
+                    foreach (var item in entity)
                     {
+
+                        DynamicParameters param = new DynamicParameters();
+                        param.Add("@Name", item.Name);
+
+                        string query = $@"
+                        DECLARE  @result table(ID Int, Name nvarchar(100))
+                        IF EXISTS(SELECT * from Languages where Name = @Name)        
+                        BEGIN            
+                        UPDATE Languages
+                                    SET Name = @Name
+							        OUTPUT INSERTED.* INTO @result
+                                    WHERE Name = @Name;
+                        END                    
+                        ELSE            
+                        BEGIN  
+                        INSERT INTO Languages (Name)
+                                     OUTPUT INSERTED.* INTO @result
+                                     VALUES (@Name)
+                        END
+                        SELECT *
+				        FROM @result";
+
+
                         var res = await con.QueryFirstOrDefaultAsync<Languages>(query, param);
                         result.Add(res);
+
+
+
                     }
+                    con.Dispose();
                 }
-                catch (Exception ex)
-                {
-                    LogsRepository.CreateLog(ex);
-                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
             }
             return result;
         }

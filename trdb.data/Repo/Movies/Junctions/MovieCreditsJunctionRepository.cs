@@ -138,48 +138,50 @@ namespace trdb.data.Repo.Movies.Junctions
         public async Task<List<People>> Manage(List<People> entity, int MovieID)
         {
             var result = new List<People>();
-            foreach (var item in entity)
+            try
             {
-                try
+                using (var con = GetConnection)
                 {
-                    DynamicParameters param = new DynamicParameters();
-                    param.Add("@MovieID", MovieID);
-                    param.Add("@PersonID", item.TMDB_ID);
-                    param.Add("@Character", item.Character);
-                    param.Add("@Department", item.Department);
-                    param.Add("@Job", item.Job);
-                    param.Add("@ListOrder", item.ListOrder);
-
-                    string query = $@"
-                    DECLARE  @result table(ID Int, MovieID Int, PersonID Int, Character nvarchar(MAX), Department nvarchar(250), Job nvarchar(250), ListOrder Int)
-                    IF EXISTS(SELECT * from MovieCreditsJunction where MovieID = @MovieID AND PersonID = @PersonID)        
-                    BEGIN            
-                    UPDATE MovieCreditsJunction
-                                SET MovieID = @MovieID, PersonID = @PersonID, Character = @Character, Department = @Department, Job = @Job, ListOrder = @ListOrder
-							    OUTPUT INSERTED.* INTO @result
-                                WHERE MovieID = @MovieID AND PersonID = @PersonID;
-                    END                    
-                    ELSE            
-                    BEGIN  
-                    INSERT INTO MovieCreditsJunction (MovieID, PersonID, Character, Department, Job, ListOrder)
-                                 OUTPUT INSERTED.* INTO @result
-                                 VALUES (@MovieID, @PersonID, @Character, @Department, @Job, @ListOrder)
-                    END
-                    SELECT *
-				    FROM @result";
-
-                    using (var con = GetConnection)
+                    foreach (var item in entity)
                     {
+                        DynamicParameters param = new DynamicParameters();
+                        param.Add("@MovieID", MovieID);
+                        param.Add("@PersonID", item.TMDB_ID);
+                        param.Add("@Character", item.Character);
+                        param.Add("@Department", item.Department);
+                        param.Add("@Job", item.Job);
+                        param.Add("@ListOrder", item.ListOrder);
+
+                        string query = $@"
+                        DECLARE  @result table(ID Int, MovieID Int, PersonID Int, Character nvarchar(MAX), Department nvarchar(250), Job nvarchar(250), ListOrder Int)
+                        IF EXISTS(SELECT * from MovieCreditsJunction where MovieID = @MovieID AND PersonID = @PersonID)        
+                        BEGIN            
+                        UPDATE MovieCreditsJunction
+                                    SET MovieID = @MovieID, PersonID = @PersonID, Character = @Character, Department = @Department, Job = @Job, ListOrder = @ListOrder
+							        OUTPUT INSERTED.* INTO @result
+                                    WHERE MovieID = @MovieID AND PersonID = @PersonID;
+                        END                    
+                        ELSE            
+                        BEGIN  
+                        INSERT INTO MovieCreditsJunction (MovieID, PersonID, Character, Department, Job, ListOrder)
+                                     OUTPUT INSERTED.* INTO @result
+                                     VALUES (@MovieID, @PersonID, @Character, @Department, @Job, @ListOrder)
+                        END
+                        SELECT *
+				        FROM @result";
+
                         var res = await con.QueryFirstOrDefaultAsync<MovieCreditsJunction>(query, param);
                         item.ID = res.ID;
                         result.Add(item);
                     }
-                }
-                catch (Exception ex)
-                {
-                    LogsRepository.CreateLog(ex);
+                    con.Dispose();
                 }
             }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+            }
+
             return result;
         }
 

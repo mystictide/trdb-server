@@ -10,8 +10,11 @@ namespace trdb.api.Helpers
         public static bool Authorize(HttpContext context, int AuthorizedAuthType)
         {
             return ValidateToken(ReadBearerToken(context), AuthorizedAuthType);
+        } 
+        public static int CurrentUserID(HttpContext context)
+        {
+            return ValidateUser(ReadBearerToken(context));
         }
-
         public static string? ReadBearerToken(HttpContext context)
         {
             try
@@ -47,9 +50,8 @@ namespace trdb.api.Helpers
                 }, out SecurityToken validatedToken);
 
                 var jwtToken = (JwtSecurityToken)validatedToken;
-                //var userID = int.Parse(jwtToken.Claims.First(x => x.Type == "id").Value);
                 var authType = int.Parse(jwtToken.Claims.First(x => x.Type == "authType").Value);
-                if (AuthorizedAuthType == authType)
+                if (authType >= AuthorizedAuthType)
                 {
                     return true;
                 }
@@ -61,6 +63,30 @@ namespace trdb.api.Helpers
             catch (Exception)
             {
                 return false;
+            }
+        }
+
+        public static int ValidateUser(string? encodedToken)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(AppSettings.Secret);
+                tokenHandler.ValidateToken(encodedToken, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+
+                var jwtToken = (JwtSecurityToken)validatedToken;
+                return int.Parse(jwtToken.Claims.First(x => x.Type == "id").Value);
+            }
+            catch (Exception)
+            {
+                return 0;
             }
         }
     }

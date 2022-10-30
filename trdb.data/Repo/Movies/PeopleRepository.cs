@@ -154,7 +154,6 @@ namespace trdb.data.Repo.Movies
                 {
                     var result = await con.QueryAsync<People>(query, param);
                     return result.ToList();
-                    ;
                 }
             }
             catch (Exception ex)
@@ -183,7 +182,6 @@ namespace trdb.data.Repo.Movies
                 {
                     var result = await con.QueryAsync<People>(query, param);
                     return result.ToList();
-                    ;
                 }
             }
             catch (Exception ex)
@@ -196,47 +194,49 @@ namespace trdb.data.Repo.Movies
         public async Task<List<People>> Import(List<People> entity)
         {
             var result = new List<People>();
-            foreach (var item in entity)
+            try
             {
-                try
+                using (var con = GetConnection)
                 {
-                    DynamicParameters param = new DynamicParameters();
-                    param.Add("@TMDB_ID", item.TMDB_ID);
-                    param.Add("@Name", item.Name);
-                    param.Add("@Original_Name", item.Original_Name);
-                    param.Add("@Photo_URL", item.Photo_URL);
-                    param.Add("@Profession", item.Profession);
-                    param.Add("@Gender", item.Gender);
-                    param.Add("@IsAdult", item.IsAdult);
-
-                    string query = $@"
-                    DECLARE  @result table(ID Int, TMDB_ID Int, Name nvarchar(MAX), Original_Name nvarchar(MAX), Photo_URL nvarchar(MAX), Profession nvarchar(250), Gender Int, IsAdult bit)
-                    IF EXISTS(SELECT * from People where TMDB_ID = @TMDB_ID)        
-                    BEGIN            
-                    UPDATE People
-                                SET TMDB_ID = @TMDB_ID, Name = @Name, Original_Name = @Original_Name, Photo_URL = @Photo_URL, Profession = @Profession, Gender = @Gender, IsAdult = @IsAdult
-							    OUTPUT INSERTED.* INTO @result
-                                WHERE TMDB_ID = @TMDB_ID;
-                    END                    
-                    ELSE            
-                    BEGIN  
-                    INSERT INTO People (TMDB_ID, Name, Original_Name, Photo_URL, Profession, Gender,  IsAdult)
-                                 OUTPUT INSERTED.* INTO @result
-                                 VALUES (@TMDB_ID, @Name, @Original_Name, @Photo_URL, @Profession, @Gender, @IsAdult)
-                    END
-                    SELECT *
-				    FROM @result";
-
-                    using (var con = GetConnection)
+                    foreach (var item in entity)
                     {
+
+                        DynamicParameters param = new DynamicParameters();
+                        param.Add("@TMDB_ID", item.TMDB_ID);
+                        param.Add("@Name", item.Name);
+                        param.Add("@Original_Name", item.Original_Name);
+                        param.Add("@Photo_URL", item.Photo_URL);
+                        param.Add("@Profession", item.Profession);
+                        param.Add("@Gender", item.Gender);
+                        param.Add("@IsAdult", item.IsAdult);
+
+                        string query = $@"
+                        DECLARE  @result table(ID Int, TMDB_ID Int, Name nvarchar(MAX), Original_Name nvarchar(MAX), Photo_URL nvarchar(MAX), Profession nvarchar(250), Gender Int, IsAdult bit)
+                        IF EXISTS(SELECT * from People where TMDB_ID = @TMDB_ID)        
+                        BEGIN            
+                        UPDATE People
+                                    SET TMDB_ID = @TMDB_ID, Name = @Name, Original_Name = @Original_Name, Photo_URL = @Photo_URL, Profession = @Profession, Gender = @Gender, IsAdult = @IsAdult
+							        OUTPUT INSERTED.* INTO @result
+                                    WHERE TMDB_ID = @TMDB_ID;
+                        END                    
+                        ELSE            
+                        BEGIN  
+                        INSERT INTO People (TMDB_ID, Name, Original_Name, Photo_URL, Profession, Gender,  IsAdult)
+                                     OUTPUT INSERTED.* INTO @result
+                                     VALUES (@TMDB_ID, @Name, @Original_Name, @Photo_URL, @Profession, @Gender, @IsAdult)
+                        END
+                        SELECT *
+				        FROM @result";
+
                         var res = await con.QueryFirstOrDefaultAsync<People>(query, param);
                         result.Add(res);
                     }
+                    con.Dispose();
                 }
-                catch (Exception ex)
-                {
-                    LogsRepository.CreateLog(ex);
-                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
             }
             return result;
         }

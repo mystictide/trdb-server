@@ -203,6 +203,7 @@ namespace trdb.data.Repo.Movies
                 using (var con = GetConnection)
                 {
                     var res = await con.QueryFirstOrDefaultAsync<entity.Movies.Movies>(query, param);
+                    con.Dispose();
                     return res;
                 }
             }

@@ -5,6 +5,7 @@ using System.Text;
 using trdb.data.Interface.User;
 using trdb.data.Repo.User;
 using trdb.entity.Helpers;
+using trdb.entity.Users;
 
 namespace trdb.business.Users
 {
@@ -40,13 +41,13 @@ namespace trdb.business.Users
                 throw new Exception("User information missing");
             }
 
-            bool userExists = await CheckEmail(entity.Email);
+            bool userExists = await CheckEmail(entity.Email, null);
             if (userExists)
             {
                 throw new Exception("Email address already registered");
             }
 
-            bool usernameExists = await CheckUsername(entity.Username);
+            bool usernameExists = await CheckUsername(entity.Username, null);
             if (usernameExists)
             {
                 throw new Exception("Username already exists");
@@ -55,7 +56,7 @@ namespace trdb.business.Users
             var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(entity.Password, salt);
             entity.Password = hashedPassword;
-            entity.AuthType = 3;
+            entity.AuthType = 1;
             entity.IsActive = true;
 
             var result = await _repo.Register(entity);
@@ -64,6 +65,7 @@ namespace trdb.business.Users
                 result.AuthType = entity.AuthType;
                 var user = new entity.Users.Users();
                 user.Username = entity.Username;
+                user.Email = entity.Email;
                 user.Token = generateToken(result);
                 user.Settings = result.Settings;
                 return user;
@@ -84,6 +86,7 @@ namespace trdb.business.Users
             {
                 var user = new entity.Users.Users();
                 user.Username = result.Username;
+                user.Email = result.Email;
                 user.Token = generateToken(result);
                 user.Settings = result.Settings;
                 return user;
@@ -92,14 +95,14 @@ namespace trdb.business.Users
             throw new Exception("Invalid credentials");
         }
 
-        public async Task<bool> CheckEmail(string Email)
+        public async Task<bool> CheckEmail(string Email, int? UserID)
         {
-            return await _repo.CheckEmail(Email);
+            return await _repo.CheckEmail(Email, UserID);
         }
 
-        public async Task<bool> CheckUsername(string Username)
+        public async Task<bool> CheckUsername(string Username, int? UserID)
         {
-            return await _repo.CheckUsername(Username);
+            return await _repo.CheckUsername(Username, UserID);
         }
 
         public async Task<ProcessResult>? DeactivateAccount(int ID)
@@ -151,6 +154,36 @@ namespace trdb.business.Users
         public async Task<ProcessResult>? UpdateUsername(int ID, string Username)
         {
             return await _repo.UpdateUsername(ID, Username);
+        }
+
+        public async Task<bool> Follow(int targetID, int userID)
+        {
+            return await _repo.Follow(targetID, userID);
+        }
+
+        public async Task<bool> Block(int targetID, int userID)
+        {
+            return await _repo.Block(targetID, userID);
+        }
+
+        public async Task<bool> ToggleDMs(int userID)
+        {
+            return await _repo.ToggleDMs(userID);
+        }
+
+        public async Task<bool> TogglePrivacy(int userID)
+        {
+            return await _repo.TogglePrivacy(userID);
+        }
+
+        public async Task<bool> ToggleAdultContent(int userID)
+        {
+            return await _repo.ToggleAdultContent(userID);
+        }
+
+        public async Task<SettingsReturn> UpdatePersonalSettings(SettingsReturn entity, int userID)
+        {
+            return await _repo.UpdatePersonalSettings(entity, userID);
         }
     }
 }

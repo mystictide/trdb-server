@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using trdb.api.Helpers;
 using trdb.business.Users;
 using trdb.entity.Users;
 
@@ -24,7 +25,9 @@ namespace trdb.api.Controllers
                 var data = await new UserManager().Register(user);
                 var userData = new UserReturn();
                 userData.Username = data.Username;
+                userData.Email = data.Email;
                 userData.Token = data.Token;
+                userData.Settings = data.Settings;
                 return Ok(userData);
             }
             catch (Exception ex)
@@ -42,7 +45,9 @@ namespace trdb.api.Controllers
                 var data = await new UserManager().Login(user);
                 var userData = new UserReturn();
                 userData.Username = data.Username;
+                userData.Email = data.Email;
                 userData.Token = data.Token;
+                userData.Settings = data.Settings;
                 return Ok(userData);
             }
             catch (Exception ex)
@@ -57,7 +62,16 @@ namespace trdb.api.Controllers
         {
             try
             {
-                var exists = await new UserManager().CheckEmail(email);
+                bool exists;
+                var userID = AuthHelpers.CurrentUserID(HttpContext);
+                if (userID < 1)
+                {
+                    exists = await new UserManager().CheckEmail(email, null);
+                }
+                else
+                {
+                    exists = await new UserManager().CheckEmail(email, userID);
+                }
                 return Ok(exists);
             }
             catch (Exception ex)
@@ -72,7 +86,17 @@ namespace trdb.api.Controllers
         {
             try
             {
-                var exists = await new UserManager().CheckUsername(username);
+                bool exists;
+                var userID = AuthHelpers.CurrentUserID(HttpContext);
+                if (userID < 1)
+                {
+                    exists = await new UserManager().CheckUsername(username, null);
+                }
+                else
+                {
+                    exists = await new UserManager().CheckUsername(username, userID);
+                }
+
                 return Ok(exists);
             }
             catch (Exception ex)

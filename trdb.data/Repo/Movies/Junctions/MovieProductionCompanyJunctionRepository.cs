@@ -138,15 +138,18 @@ namespace trdb.data.Repo.Movies.Junctions
         public async Task<List<ProductionCompanies>> Manage(List<ProductionCompanies> entity, int MovieID)
         {
             var result = new List<ProductionCompanies>();
-            foreach (var item in entity)
+            try
             {
-                try
+                using (var con = GetConnection)
                 {
-                    DynamicParameters param = new DynamicParameters();
-                    param.Add("@MovieID", MovieID);
-                    param.Add("@ProductionCompanyID", item.TMDB_ID);
+                    foreach (var item in entity)
+                    {
 
-                    string query = $@"
+                        DynamicParameters param = new DynamicParameters();
+                        param.Add("@MovieID", MovieID);
+                        param.Add("@ProductionCompanyID", item.TMDB_ID);
+
+                        string query = $@"
                     DECLARE  @result table(ID Int, MovieID Int, ProductionCompanyID Int)
                     IF EXISTS(SELECT * from MovieProductionCompanyJunction where MovieID = @MovieID AND ProductionCompanyID = @ProductionCompanyID)        
                     BEGIN            
@@ -164,17 +167,17 @@ namespace trdb.data.Repo.Movies.Junctions
                     SELECT *
 				    FROM @result";
 
-                    using (var con = GetConnection)
-                    {
+
                         var res = await con.QueryFirstOrDefaultAsync<MovieProductionCompanyJunction>(query, param);
                         item.ID = res.ID;
                         result.Add(item);
                     }
+                    con.Dispose();
                 }
-                catch (Exception ex)
-                {
-                    LogsRepository.CreateLog(ex);
-                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
             }
             return result;
         }

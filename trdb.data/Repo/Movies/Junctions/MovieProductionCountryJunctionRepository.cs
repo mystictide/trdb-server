@@ -138,48 +138,51 @@ namespace trdb.data.Repo.Movies.Junctions
         public async Task<List<ProductionCountries>> Manage(List<ProductionCountries> entity, int MovieID)
         {
             var result = new List<ProductionCountries>();
-            foreach (var item in entity)
+            try
             {
-                try
+                using (var con = GetConnection)
                 {
-                    DynamicParameters param = new DynamicParameters();
-                    param.Add("@MovieID", MovieID);
-                    param.Add("@ProductionCountryID", item.ID);
-                    param.Add("@Name", item.Name);
-
-                    string query = $@"
-                    DECLARE  @result table(ID Int, MovieID Int, ProductionCountryID Int)
-                    IF @ProductionCountryID < 1
-                    BEGIN
-                    SET @ProductionCountryID = (select ID from ProductionCountries where Name = @Name)
-                    END
-                    IF EXISTS(SELECT * from MovieProductionCountryJunction where MovieID = @MovieID AND ProductionCountryID = @ProductionCountryID)        
-                    BEGIN            
-                    UPDATE MovieProductionCountryJunction
-                                SET MovieID = @MovieID, ProductionCountryID = @ProductionCountryID
-							    OUTPUT INSERTED.* INTO @result
-                                WHERE MovieID = @MovieID AND ProductionCountryID = @ProductionCountryID;
-                    END                    
-                    ELSE            
-                    BEGIN  
-                    INSERT INTO MovieProductionCountryJunction (MovieID, ProductionCountryID)
-                                 OUTPUT INSERTED.* INTO @result
-                                 VALUES (@MovieID, @ProductionCountryID)
-                    END
-                    SELECT *
-				    FROM @result";
-
-                    using (var con = GetConnection)
+                    foreach (var item in entity)
                     {
+
+                        DynamicParameters param = new DynamicParameters();
+                        param.Add("@MovieID", MovieID);
+                        param.Add("@ProductionCountryID", item.ID);
+                        param.Add("@Name", item.Name);
+
+                        string query = $@"
+                        DECLARE  @result table(ID Int, MovieID Int, ProductionCountryID Int)
+                        IF @ProductionCountryID < 1
+                        BEGIN
+                        SET @ProductionCountryID = (select ID from ProductionCountries where Name = @Name)
+                        END
+                        IF EXISTS(SELECT * from MovieProductionCountryJunction where MovieID = @MovieID AND ProductionCountryID = @ProductionCountryID)        
+                        BEGIN            
+                        UPDATE MovieProductionCountryJunction
+                                    SET MovieID = @MovieID, ProductionCountryID = @ProductionCountryID
+							        OUTPUT INSERTED.* INTO @result
+                                    WHERE MovieID = @MovieID AND ProductionCountryID = @ProductionCountryID;
+                        END                    
+                        ELSE            
+                        BEGIN  
+                        INSERT INTO MovieProductionCountryJunction (MovieID, ProductionCountryID)
+                                     OUTPUT INSERTED.* INTO @result
+                                     VALUES (@MovieID, @ProductionCountryID)
+                        END
+                        SELECT *
+				        FROM @result";
+
+
                         var res = await con.QueryFirstOrDefaultAsync<ProductionCountries>(query, param);
                         item.ID = res.ID;
                         result.Add(item);
                     }
+                    con.Dispose();
                 }
-                catch (Exception ex)
-                {
-                    LogsRepository.CreateLog(ex);
-                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
             }
             return result;
         }

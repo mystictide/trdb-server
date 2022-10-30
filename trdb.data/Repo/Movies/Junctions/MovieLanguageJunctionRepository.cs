@@ -138,49 +138,52 @@ namespace trdb.data.Repo.Movies.Junctions
         public async Task<List<Languages>> Manage(List<Languages> entity, int MovieID)
         {
             var result = new List<Languages>();
-            foreach (var item in entity)
+            try
             {
-                try
+                using (var con = GetConnection)
                 {
-                    DynamicParameters param = new DynamicParameters();
-                    param.Add("@MovieID", MovieID);
-                    param.Add("@LanguageID", item.ID);
-                    param.Add("@Name", item.Name);
-
-                    string query = $@"
-                    DECLARE  @result table(ID Int, MovieID Int, LanguageID Int)
-                    IF @LanguageID < 1
-                    BEGIN
-                    SET @LanguageID = (select ID from Languages where Name = @Name)
-                    END
-                    IF EXISTS(SELECT * from MovieLanguageJunction where MovieID = @MovieID AND LanguageID = @LanguageID)        
-                    BEGIN            
-                    UPDATE MovieLanguageJunction
-                                SET MovieID = @MovieID, LanguageID = @LanguageID
-							    OUTPUT INSERTED.* INTO @result
-                                WHERE MovieID = @MovieID AND LanguageID = @LanguageID;
-                    END                    
-                    ELSE            
-                    BEGIN  
-                    INSERT INTO MovieLanguageJunction (MovieID, LanguageID)
-                                 OUTPUT INSERTED.* INTO @result
-                                 VALUES (@MovieID, @LanguageID)
-                    END
-                    SELECT *
-				    FROM @result";
-
-                    using (var con = GetConnection)
+                    foreach (var item in entity)
                     {
+
+                        DynamicParameters param = new DynamicParameters();
+                        param.Add("@MovieID", MovieID);
+                        param.Add("@LanguageID", item.ID);
+                        param.Add("@Name", item.Name);
+
+                        string query = $@"
+                        DECLARE  @result table(ID Int, MovieID Int, LanguageID Int)
+                        IF @LanguageID < 1
+                        BEGIN
+                        SET @LanguageID = (select ID from Languages where Name = @Name)
+                        END
+                        IF EXISTS(SELECT * from MovieLanguageJunction where MovieID = @MovieID AND LanguageID = @LanguageID)        
+                        BEGIN            
+                        UPDATE MovieLanguageJunction
+                                    SET MovieID = @MovieID, LanguageID = @LanguageID
+							        OUTPUT INSERTED.* INTO @result
+                                    WHERE MovieID = @MovieID AND LanguageID = @LanguageID;
+                        END                    
+                        ELSE            
+                        BEGIN  
+                        INSERT INTO MovieLanguageJunction (MovieID, LanguageID)
+                                     OUTPUT INSERTED.* INTO @result
+                                     VALUES (@MovieID, @LanguageID)
+                        END
+                        SELECT *
+				        FROM @result";
+
                         var res = await con.QueryFirstOrDefaultAsync<MovieLanguageJunction>(query, param);
                         item.ID = res.ID;
                         result.Add(item);
                     }
-                }
-                catch (Exception ex)
-                {
-                    LogsRepository.CreateLog(ex);
+                    con.Dispose();
                 }
             }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+            }
+
             return result;
         }
 

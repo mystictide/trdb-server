@@ -150,7 +150,7 @@ namespace trdb.data.Repo.MovieGenres
                 {
                     var result = await con.QueryAsync<entity.Movies.MovieGenres>(query, param);
                     return result.ToList();
-                        ;
+                    ;
                 }
             }
             catch (Exception ex)
@@ -163,43 +163,46 @@ namespace trdb.data.Repo.MovieGenres
         public async Task<List<entity.Movies.MovieGenres>> Import(List<entity.Movies.MovieGenres> entity)
         {
             var result = new List<entity.Movies.MovieGenres>();
-            foreach (var item in entity)
+            try
             {
-                try
+                using (var con = GetConnection)
                 {
-                    DynamicParameters param = new DynamicParameters();
-                    param.Add("@TMDB_ID", item.TMDB_ID);
-                    param.Add("@Name", item.Name);
-
-                    string query = $@"
-                    DECLARE  @result table(ID Int, TMDB_ID Int, Name nvarchar(100))
-                    IF EXISTS(SELECT * from MovieGenres where TMDB_ID = @TMDB_ID)        
-                    BEGIN            
-                    UPDATE MovieGenres
-                                SET TMDB_ID = @TMDB_ID, Name = @Name
-							    OUTPUT INSERTED.* INTO @result
-                                WHERE TMDB_ID = @TMDB_ID;
-                    END                    
-                    ELSE            
-                    BEGIN  
-                    INSERT INTO MovieGenres (TMDB_ID, Name)
-                                 OUTPUT INSERTED.* INTO @result
-                                 VALUES (@TMDB_ID, @Name)
-                    END
-                    SELECT *
-				    FROM @result";
-
-                    using (var con = GetConnection)
+                    foreach (var item in entity)
                     {
+
+                        DynamicParameters param = new DynamicParameters();
+                        param.Add("@TMDB_ID", item.TMDB_ID);
+                        param.Add("@Name", item.Name);
+
+                        string query = $@"
+                        DECLARE  @result table(ID Int, TMDB_ID Int, Name nvarchar(100))
+                        IF EXISTS(SELECT * from MovieGenres where TMDB_ID = @TMDB_ID)        
+                        BEGIN            
+                        UPDATE MovieGenres
+                                    SET TMDB_ID = @TMDB_ID, Name = @Name
+							        OUTPUT INSERTED.* INTO @result
+                                    WHERE TMDB_ID = @TMDB_ID;
+                        END                    
+                        ELSE            
+                        BEGIN  
+                        INSERT INTO MovieGenres (TMDB_ID, Name)
+                                     OUTPUT INSERTED.* INTO @result
+                                     VALUES (@TMDB_ID, @Name)
+                        END
+                        SELECT *
+				        FROM @result";
+
                         var res = await con.QueryFirstOrDefaultAsync<entity.Movies.MovieGenres>(query, param);
                         result.Add(res);
                     }
-                }
-                catch (Exception ex)
-                {
-                    LogsRepository.CreateLog(ex);
+                    con.Dispose();
                 }
             }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+            }
+
             return result;
         }
 

@@ -163,43 +163,45 @@ namespace trdb.data.Repo.Movies
         public async Task<List<ProductionCountries>> Import(List<ProductionCountries> entity)
         {
             var result = new List<ProductionCountries>();
-            foreach (var item in entity)
+            try
             {
-                try
+                using (var con = GetConnection)
                 {
-                    DynamicParameters param = new DynamicParameters();
-                    param.Add("@Name", item.Name);
-                    param.Add("@iso", item.iso_3166_1);
-
-                    string query = $@"
-                    DECLARE  @result table(ID Int, Name nvarchar(MAX), iso_3166_1 nvarchar(5))
-                    IF EXISTS(SELECT * from ProductionCountries where Name = @Name)   
-                    BEGIN            
-                    UPDATE ProductionCountries
-                                SET Name = @Name, iso_3166_1 = @iso
-							    OUTPUT INSERTED.* INTO @result
-                                WHERE Name = @Name;
-                    END                    
-                    ELSE            
-                    BEGIN  
-                    INSERT INTO ProductionCountries (Name, iso_3166_1)
-                                 OUTPUT INSERTED.* INTO @result
-                                 VALUES (@Name, @iso)
-                    END
-                    SELECT *
-				    FROM @result";
-
-                    using (var con = GetConnection)
+                    foreach (var item in entity)
                     {
+                        DynamicParameters param = new DynamicParameters();
+                        param.Add("@Name", item.Name);
+                        param.Add("@iso", item.iso_3166_1);
+
+                        string query = $@"
+                        DECLARE  @result table(ID Int, Name nvarchar(MAX), iso_3166_1 nvarchar(5))
+                        IF EXISTS(SELECT * from ProductionCountries where Name = @Name)   
+                        BEGIN            
+                        UPDATE ProductionCountries
+                                    SET Name = @Name, iso_3166_1 = @iso
+							        OUTPUT INSERTED.* INTO @result
+                                    WHERE Name = @Name;
+                        END                    
+                        ELSE            
+                        BEGIN  
+                        INSERT INTO ProductionCountries (Name, iso_3166_1)
+                                     OUTPUT INSERTED.* INTO @result
+                                     VALUES (@Name, @iso)
+                        END
+                        SELECT *
+				        FROM @result";
+
                         var res = await con.QueryFirstOrDefaultAsync<ProductionCountries>(query, param);
                         result.Add(res);
                     }
-                }
-                catch (Exception ex)
-                {
-                    LogsRepository.CreateLog(ex);
+                    con.Dispose();
                 }
             }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+            }
+
             return result;
         }
 
