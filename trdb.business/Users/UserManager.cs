@@ -185,5 +185,10 @@ namespace trdb.business.Users
         {
             return await _repo.UpdatePersonalSettings(entity, userID);
         }
+
+        public async Task<string> UpdateAvatar(string path, int userID)
+        {
+            return await _repo.UpdateAvatar(path, userID);
+        }
     }
 }

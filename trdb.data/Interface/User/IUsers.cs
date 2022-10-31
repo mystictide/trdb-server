@@ -15,6 +15,7 @@ namespace trdb.data.Interface.User
         Task<bool> Follow(int targetID, int userID);
         Task<bool> Block(int targetID, int userID);
         Task<SettingsReturn> UpdatePersonalSettings(SettingsReturn entity, int userID);
+        Task<string> UpdateAvatar(string path, int userID);
         Task<bool> ToggleDMs(int userID);
         Task<bool> TogglePrivacy(int userID);
         Task<bool> ToggleAdultContent(int userID);

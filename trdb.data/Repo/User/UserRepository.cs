@@ -564,5 +564,27 @@ namespace trdb.data.Repo.User
                 return res;
             }
         }
+
+        public async Task<string> UpdateAvatar(string path, int userID)
+        {
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@UserID", userID);
+            param.Add("@path", path);
+
+            string query = $@"
+                UPDATE UserSettingsJunction
+                SET  Picture = IsNull(@path, Picture)
+                WHERE UserID = @UserID
+
+                Select Picture
+                from UserSettingsJunction
+                Where UserID = @UserID";
+
+            using (var con = GetConnection)
+            {
+                var res = await con.QueryFirstAsync<string>(query, param);
+                return res;
+            }
+        }
     }
 }

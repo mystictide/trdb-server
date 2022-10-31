@@ -1,7 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Drawing;
+using System.IO;
 using trdb.api.Helpers;
 using trdb.business.Users;
 using trdb.entity.Users;
+using static System.Net.WebRequestMethods;
 
 namespace trdb.api.Controllers
 {
@@ -10,10 +14,12 @@ namespace trdb.api.Controllers
     public class UserSettingsController : Controller
     {
         private readonly ILogger<UserSettingsController> _logger;
+        private IWebHostEnvironment _env;
 
-        public UserSettingsController(ILogger<UserSettingsController> logger)
+        public UserSettingsController(ILogger<UserSettingsController> logger, IWebHostEnvironment env)
         {
             _logger = logger;
+            _env = env;
         }
 
         private static int AuthorizedAuthType = 1;
@@ -40,13 +46,26 @@ namespace trdb.api.Controllers
 
         [HttpPost]
         [Route("avatar")]
-        public async Task<IActionResult> UpdateAvatar([FromBody] SettingsReturn entity)
+        public async Task<IActionResult> UpdateAvatar([FromForm] IFormFile file)
         {
             try
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var result = await new UserManager().UpdatePersonalSettings(entity, AuthHelpers.CurrentUserID(HttpContext));
+                    string result = "";
+                    if (file.Length > 0)
+                    {
+                        AuthHelpers.CurrentUserID(HttpContext);
+                        var path = await CustomHelpers.SaveUserAvatar(AuthHelpers.CurrentUserID(HttpContext), _env.ContentRootPath, file);
+                        if (path != null)
+                        {
+                            result = await new UserManager().UpdateAvatar(path, AuthHelpers.CurrentUserID(HttpContext));
+                        }
+                        else
+                        {
+                            return StatusCode(401, "Failed to save image");
+                        }
+                    }
                     return Ok(result);
                 }
 
