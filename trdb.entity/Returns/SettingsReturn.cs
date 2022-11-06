@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace trdb.entity.Users
+namespace trdb.entity.Returns
 {
     public class SettingsReturn
     {

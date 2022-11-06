@@ -1,5 +1,6 @@
-﻿
-namespace trdb.entity.Users
+﻿using trdb.entity.Users;
+
+namespace trdb.entity.Returns
 {
     public class UserReturn
     {

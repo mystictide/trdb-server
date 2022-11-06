@@ -5,7 +5,8 @@ using System.Text;
 using trdb.data.Interface.User;
 using trdb.data.Repo.User;
 using trdb.entity.Helpers;
-using trdb.entity.Users;
+using trdb.entity.Returns;
+using trdb.entity.UserMovies;
 
 namespace trdb.business.Users
 {
@@ -64,6 +65,7 @@ namespace trdb.business.Users
             {
                 result.AuthType = entity.AuthType;
                 var user = new entity.Users.Users();
+                user.ID = entity.ID;
                 user.Username = entity.Username;
                 user.Email = entity.Email;
                 user.Token = generateToken(result);
@@ -85,6 +87,7 @@ namespace trdb.business.Users
             if (result != null && BCrypt.Net.BCrypt.Verify(entity.Password, result.Password))
             {
                 var user = new entity.Users.Users();
+                user.ID = result.ID;
                 user.Username = result.Username;
                 user.Email = result.Email;
                 user.Token = generateToken(result);
@@ -189,6 +192,11 @@ namespace trdb.business.Users
         public async Task<string> UpdateAvatar(string path, int userID)
         {
             return await _repo.UpdateAvatar(path, userID);
+        }
+
+        public async Task<List<UserFavoriteMovies>> ManageFavoriteMovies(List<UserFavoriteMovies> entity, int userID)
+        {
+            return await _repo.ManageFavoriteMovies(entity, userID);
         }
     }
 }

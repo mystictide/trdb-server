@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using trdb.api.Helpers;
 using trdb.business.Users;
+using trdb.entity.Returns;
 using trdb.entity.Users;
 
 namespace trdb.api.Controllers
@@ -44,6 +45,7 @@ namespace trdb.api.Controllers
             {
                 var data = await new UserManager().Login(user);
                 var userData = new UserReturn();
+                userData.ID = data.ID;
                 userData.Username = data.Username;
                 userData.Email = data.Email;
                 userData.Token = data.Token;

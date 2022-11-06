@@ -1,4 +1,6 @@
 ﻿using trdb.entity.Helpers;
+using trdb.entity.Returns;
+using trdb.entity.UserMovies;
 using trdb.entity.Users;
 
 namespace trdb.data.Interface.User
@@ -16,6 +18,7 @@ namespace trdb.data.Interface.User
         Task<bool> Block(int targetID, int userID);
         Task<SettingsReturn> UpdatePersonalSettings(SettingsReturn entity, int userID);
         Task<string> UpdateAvatar(string path, int userID);
+        Task<List<UserFavoriteMovies>> ManageFavoriteMovies(List<UserFavoriteMovies> entity, int userID);
         Task<bool> ToggleDMs(int userID);
         Task<bool> TogglePrivacy(int userID);
         Task<bool> ToggleAdultContent(int userID);

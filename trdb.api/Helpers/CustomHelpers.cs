@@ -1,10 +1,10 @@
 ﻿using Newtonsoft.Json;
 using RestSharp;
-using System.Buffers.Text;
 using System.Drawing;
 using System.Drawing.Imaging;
 using trdb.api.Models;
 using trdb.entity.Movies;
+using trdb.entity.Returns;
 using trdb.entity.Users;
 
 namespace trdb.api.Helpers
@@ -71,6 +71,11 @@ namespace trdb.api.Helpers
             return JsonConvert.DeserializeObject<List<MovieReturn>>(JsonConvert.SerializeObject(obj));
         }
 
+        public static List<MovieReturn> CastMoviesAsSimpleMovies(List<Movies> movies)
+        {
+            return JsonConvert.DeserializeObject<List<MovieReturn>>(JsonConvert.SerializeObject(movies));
+        }
+
         public static Bitmap Base64ToBitmap(IFormFile file)
         {
             try
@@ -100,16 +105,6 @@ namespace trdb.api.Helpers
             try
             {
                 Bitmap resizedImage;
-                //using (var memoryStream = new MemoryStream())
-                //{
-                //    await file.CopyToAsync(memoryStream);
-                //    using (var img = Image.FromStream(memoryStream))
-                //    {
-                //        original = new Bitmap(img);
-                //        img.Dispose();
-                //    }
-                //    memoryStream.Dispose();
-                //}
 
                 int rectHeight = width;
                 int rectWidth = height;
@@ -142,7 +137,7 @@ namespace trdb.api.Helpers
                 }
                 return resizedImage;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return null;
             }

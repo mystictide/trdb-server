@@ -1,11 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Drawing;
-using System.IO;
 using trdb.api.Helpers;
 using trdb.business.Users;
-using trdb.entity.Users;
-using static System.Net.WebRequestMethods;
+using trdb.entity.Returns;
+using trdb.entity.UserMovies;
 
 namespace trdb.api.Controllers
 {
@@ -35,7 +32,6 @@ namespace trdb.api.Controllers
                     var result = await new UserManager().UpdatePersonalSettings(entity, AuthHelpers.CurrentUserID(HttpContext));
                     return Ok(result);
                 }
-
                 return StatusCode(500, "Authorization failed");
             }
             catch (Exception ex)
@@ -55,7 +51,6 @@ namespace trdb.api.Controllers
                     string result = "";
                     if (file.Length > 0)
                     {
-                        AuthHelpers.CurrentUserID(HttpContext);
                         var path = await CustomHelpers.SaveUserAvatar(AuthHelpers.CurrentUserID(HttpContext), _env.ContentRootPath, file);
                         if (path != null)
                         {
@@ -68,7 +63,25 @@ namespace trdb.api.Controllers
                     }
                     return Ok(result);
                 }
+                return StatusCode(500, "Authorization failed");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
 
+        [HttpPost]
+        [Route("favorites")]
+        public async Task<IActionResult> ManageFavoriteMovies([FromBody] List<UserFavoriteMovies> entity)
+        {
+            try
+            {
+                if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
+                {
+                    var result = await new UserManager().ManageFavoriteMovies(entity, AuthHelpers.CurrentUserID(HttpContext));
+                    return Ok(result);
+                }
                 return StatusCode(500, "Authorization failed");
             }
             catch (Exception ex)

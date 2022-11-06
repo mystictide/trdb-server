@@ -2,6 +2,9 @@
 using RestSharp;
 using trdb.api.Helpers;
 using trdb.business.Helpers;
+using trdb.business.Movies;
+using trdb.entity.Helpers;
+using trdb.entity.Movies;
 
 namespace trdb.api.Controllers
 {
@@ -14,6 +17,34 @@ namespace trdb.api.Controllers
         public MainController(ILogger<MainController> logger)
         {
             _logger = logger;
+        }
+
+        [HttpGet]
+        [Route("search/movie")]
+        public async Task<IActionResult> SearchMovie([FromQuery] Filter filter)
+        {
+            try
+            {
+                if (AuthHelpers.Authorize(HttpContext, 1))
+                {
+                    var filterModel = new Movies();
+                    filter.pageSize = 20;
+                    filter.isDetailSearch = false;
+                    FilteredList<Movies> request = new FilteredList<Movies>()
+                    {
+                        filter = filter,
+                        filterModel = filterModel,
+                    };
+                    var result = await new MovieManager().FilteredList(request);
+                    return Ok(result);
+                }
+
+                return StatusCode(500, "Authorization failed");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         #region homepage

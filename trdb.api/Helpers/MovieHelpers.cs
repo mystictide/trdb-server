@@ -3,6 +3,7 @@ using RestSharp;
 using trdb.api.Models;
 using trdb.entity.Helpers;
 using trdb.entity.Movies;
+using trdb.entity.Returns;
 
 namespace trdb.api.Helpers
 {

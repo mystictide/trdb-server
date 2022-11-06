@@ -1,5 +1,7 @@
 ﻿using Dapper.Contrib.Extensions;
 using Newtonsoft.Json;
+using trdb.entity.Returns;
+using trdb.entity.UserMovies;
 
 namespace trdb.entity.Users
 {
@@ -23,5 +25,8 @@ namespace trdb.entity.Users
         public bool IsPublic { get; set; }
         [JsonProperty("adult")]
         public bool IsAdult { get; set; }
+        [Write(false)]
+        [JsonProperty("favorite_movies")]
+        public List<UserFavoriteMovies> Favourites { get; set; }
     }
 }
