@@ -1,4 +1,5 @@
 ﻿using trdb.entity.Users;
+using trdb.entity.Users.Settings;
 
 namespace trdb.entity.Returns
 {

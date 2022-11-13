@@ -1,4 +1,5 @@
 ﻿using Dapper.Contrib.Extensions;
+using trdb.entity.Users.Settings;
 
 namespace trdb.entity.Users
 {

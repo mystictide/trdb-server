@@ -1,7 +1,7 @@
 ﻿using Dapper.Contrib.Extensions;
 using Newtonsoft.Json;
 
-namespace trdb.entity.UserMovies
+namespace trdb.entity.Users.Settings
 {
     [Table("UserFavoriteMoviesJunction")]
     public class UserFavoriteMovies

@@ -61,8 +61,9 @@ namespace trdb.data.Repo.Movies
                 DynamicParameters param = new DynamicParameters();
                 param.Add("@Keyword", request.filter.Keyword);
                 param.Add("@PageSize", request.filter.pageSize);
+                param.Add("@Profession", request.filterModel.Profession);
 
-                string WhereClause = @" WHERE (t.Name like '%' + @Keyword + '%') OR (t.Original_Name like '%' + @Keyword + '%')";
+                string WhereClause = @" WHERE t.Profession = @Profession AND (t.Name like '%' + @Keyword + '%') OR (t.Original_Name like '%' + @Keyword + '%')";
 
                 string query_count = $@"  Select Count(t.ID) from People t {WhereClause}";
 
@@ -82,6 +83,7 @@ namespace trdb.data.Repo.Movies
                     result.data = await con.QueryAsync<People>(query, param);
                     result.filter = request.filter;
                     result.filterModel = request.filterModel;
+                    result.filterModel.Pager = result.filter.pager;
                     return result;
                 }
             }

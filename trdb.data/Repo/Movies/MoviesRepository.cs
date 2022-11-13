@@ -81,6 +81,7 @@ namespace trdb.data.Repo.Movies
                     result.data = await con.QueryAsync<entity.Movies.Movies>(query, param);
                     result.filter = request.filter;
                     result.filterModel = request.filterModel;
+                    result.filterModel.Pager = result.filter.pager;
                     return result;
                 }
             }

@@ -12,6 +12,8 @@ namespace trdb.entity.Returns
         public string Title { get; set; }
         [JsonProperty("backdrop_path")]
         public string Backdrop_URL { get; set; }
+        [JsonProperty("release_date")]
+        public string Release_Date { get; set; }
         [JsonProperty("poster_path")]
         public string Poster_URL { get; set; }
         [JsonProperty("expires")]

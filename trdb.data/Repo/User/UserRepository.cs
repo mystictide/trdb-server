@@ -4,8 +4,8 @@ using trdb.data.Interface.User;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
 using trdb.entity.Returns;
-using trdb.entity.UserMovies;
 using trdb.entity.Users;
+using trdb.entity.Users.Settings;
 
 namespace trdb.data.Repo.User
 {
@@ -28,8 +28,8 @@ namespace trdb.data.Repo.User
 	                    INSERT INTO Users (Email, Username, Password, AuthType, IsActive)
 	                        OUTPUT INSERTED.* INTO @result
 	                        VALUES ('', 'test', '', 2, 1)
-	                    INSERT INTO UserSettingsJunction (UserID, Bio, Picture, Website, IsDMAllowed, IsPublic, IsAdult)
-	                        VALUES ((SELECT ID FROM @result), '', NULL, '', 0, 1, 0)
+	                    INSERT INTO UserSettingsJunction (UserID, Bio, Picture, Website, IsDMAllowed, IsWatchlistPublic, IsPublic, IsAdult)
+	                        VALUES ((SELECT ID FROM @result), '', NULL, '', 1, 1, 1, 0)
                 SELECT *
                 FROM @result t
                 LEFT JOIN UserSettingsJunction s on s.UserID = t.ID";
@@ -66,11 +66,23 @@ namespace trdb.data.Repo.User
                 LEFT JOIN UserSettingsJunction s on s.UserID = t.ID
                 {WhereClause}";
 
-                string favQuery = $@"
+                string favMovieQuery = $@"
                 SELECT t.ID, t.MovieID, t.SortOrder, m.Title, m.Backdrop_URL, m.Poster_URL
                 FROM UserFavoriteMoviesJunction t
                 LEFT JOIN Movies m ON m.TMDB_ID = t.MovieID
                 WHERE UserID = @ID
+                ORDER BY t.SortOrder ASC";
+                string favActorsQuery = $@"
+                SELECT t.ID, t.PersonID, t.SortOrder, m.Name, m.Photo_URL
+                FROM UserFavoritePeopleJunction t
+                LEFT JOIN People m ON m.TMDB_ID = t.PersonID
+                WHERE UserID = @ID AND IsActor = 1
+                ORDER BY t.SortOrder ASC";
+                string favDirectorsQuery = $@"
+                SELECT t.ID, t.PersonID, t.SortOrder, m.Name, m.Photo_URL
+                FROM UserFavoritePeopleJunction t
+                LEFT JOIN People m ON m.TMDB_ID = t.PersonID
+                WHERE UserID = @ID AND IsActor = 0
                 ORDER BY t.SortOrder ASC";
 
                 using (var con = GetConnection)
@@ -80,10 +92,20 @@ namespace trdb.data.Repo.User
                         a.Settings = b; return a;
                     }, param, splitOn: "ID");
                     param.Add("@ID", res.FirstOrDefault().ID);
-                    var favs = await con.QueryAsync<UserFavoriteMovies>(favQuery, param);
-                    if (favs != null)
+                    var favMovies = await con.QueryAsync<UserFavoriteMovies>(favMovieQuery, param);
+                    var favActors = await con.QueryAsync<UserFavoritePeople>(favActorsQuery, param);
+                    var favDirectors = await con.QueryAsync<UserFavoritePeople>(favDirectorsQuery, param);
+                    if (favMovies != null)
                     {
-                        res.FirstOrDefault().Settings.Favourites = favs.ToList();
+                        res.FirstOrDefault().Settings.FavoriteMovies = favMovies.ToList();
+                    }
+                    if (favActors != null)
+                    {
+                        res.FirstOrDefault().Settings.FavoriteActors = favActors.ToList();
+                    }
+                    if (favDirectors != null)
+                    {
+                        res.FirstOrDefault().Settings.FavoriteDirectors = favDirectors.ToList();
                     }
                     return res.FirstOrDefault();
                 }
@@ -216,18 +238,24 @@ namespace trdb.data.Repo.User
                 LEFT JOIN UserSettingsJunction usj ON usj.UserID = t.ID
                 {WhereClause}";
 
-                string favQuery = $@"
+                string favMovieQuery = $@"
                 SELECT t.ID, t.MovieID, t.SortOrder, m.Title, m.Backdrop_URL, m.Poster_URL
                 FROM UserFavoriteMoviesJunction t
                 LEFT JOIN Movies m ON m.TMDB_ID = t.MovieID
                 WHERE UserID = @ID
                 ORDER BY t.SortOrder ASC";
-                //string favQuery = $@"
-                //SELECT ID, TMDB_ID, title, Backdrop_URL, Poster_URL
-                //FROM Movies t
-                //WHERE EXISTS(SELECT MovieID
-                //FROM UserFavoriteMoviesJunction u
-                //WHERE u.UserID = @ID AND u.MovieID IN (t.TMDB_ID))";
+                string favActorsQuery = $@"
+                SELECT t.ID, t.PersonID, t.SortOrder, m.Name, m.Photo_URL
+                FROM UserFavoritePeopleJunction t
+                LEFT JOIN People m ON m.TMDB_ID = t.PersonID
+                WHERE UserID = @ID AND IsActor = 1
+                ORDER BY t.SortOrder ASC";
+                string favDirectorsQuery = $@"
+                SELECT t.ID, t.PersonID, t.SortOrder, m.Name, m.Photo_URL
+                FROM UserFavoritePeopleJunction t
+                LEFT JOIN People m ON m.TMDB_ID = t.PersonID
+                WHERE UserID = @ID AND IsActor = 0
+                ORDER BY t.SortOrder ASC";
 
                 using (var con = GetConnection)
                 {
@@ -237,10 +265,20 @@ namespace trdb.data.Repo.User
                         return user;
                     }, param, splitOn: "ID");
                     param.Add("@ID", res.FirstOrDefault().ID);
-                    var favs = await con.QueryAsync<UserFavoriteMovies>(favQuery, param);
-                    if (favs != null)
+                    var favMovies = await con.QueryAsync<UserFavoriteMovies>(favMovieQuery, param);
+                    var favActors = await con.QueryAsync<UserFavoritePeople>(favActorsQuery, param);
+                    var favDirectors = await con.QueryAsync<UserFavoritePeople>(favDirectorsQuery, param);
+                    if (favMovies != null)
                     {
-                        res.FirstOrDefault().Settings.Favourites = favs.ToList();
+                        res.FirstOrDefault().Settings.FavoriteMovies = favMovies.ToList();
+                    }
+                    if (favActors != null)
+                    {
+                        res.FirstOrDefault().Settings.FavoriteActors = favActors.ToList();
+                    }
+                    if (favDirectors != null)
+                    {
+                        res.FirstOrDefault().Settings.FavoriteDirectors = favDirectors.ToList();
                     }
                     return res.FirstOrDefault();
                 }
@@ -527,6 +565,24 @@ namespace trdb.data.Repo.User
             }
         }
 
+        public async Task<bool> ToggleWatchlist(int userID)
+        {
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@UserID", userID);
+
+            string query = $@"
+                UPDATE UserSettingsJunction
+                SET IsWatchlistPublic = ~IsWatchlistPublic
+                WHERE UserID = @UserID
+                Select IsWatchlistPublic from UserSettingsJunction where UserID = @UserID";
+
+            using (var con = GetConnection)
+            {
+                var res = await con.QueryFirstAsync<bool>(query, param);
+                return res;
+            }
+        }
+
         public async Task<bool> TogglePrivacy(int userID)
         {
             DynamicParameters param = new DynamicParameters();
@@ -639,33 +695,98 @@ namespace trdb.data.Repo.User
                         #endregion
 
                         string query = $@"
-                        DELETE FROM UserFavoriteMoviesJunction WHERE ID = @ID AND UserID = @UserID) 
+                        DELETE FROM UserFavoriteMoviesJunction WHERE UserID = @UserID 
                         INSERT INTO UserFavoriteMoviesJunction (UserID, MovieID, SortOrder)
                         VALUES (@UserID, @MovieID, @SortOrder)
-                        SELECT t.ID, t.MovieID, t.@SortOrder, m.Title, m.Backdrop_URL, m.Poster_URL
+                        SELECT t.ID, t.MovieID, t.SortOrder, m.Title, m.Backdrop_URL, m.Poster_URL
                         FROM UserFavoriteMoviesJunction t
                         LEFT JOIN Movies m ON m.TMDB_ID = t.MovieID
-                        WHERE UserID = @UserID AND MovieID = @MovieID
-                        ORDER BY t.SortOrder ASC"; 
-                        
-                        //string query = $@"
-                        //IF EXISTS(SELECT * from UserFavoriteMoviesJunction where ID = @ID AND UserID = @UserID) 
-                        //BEGIN            
-	                       // UPDATE UserFavoriteMoviesJunction
-	                       // SET MovieID = @MovieID
-	                       // WHERE ID = @ID AND UserID = @UserID
-                        //END                    
-                        //ELSE            
-                        //BEGIN  
-	                       // INSERT INTO UserFavoriteMoviesJunction (UserID, MovieID)
-	                       // VALUES (@UserID, @MovieID)
-                        //END
-                        //SELECT t.ID, t.MovieID, m.Title, m.Backdrop_URL, m.Poster_URL
-                        //FROM UserFavoriteMoviesJunction t
-                        //LEFT JOIN Movies m ON m.TMDB_ID = t.MovieID
-                        //WHERE UserID = @UserID AND MovieID = @MovieID";
+                        WHERE UserID = @UserID
+                        ORDER BY t.SortOrder ASC";
 
                         var res = await con.QueryFirstOrDefaultAsync<UserFavoriteMovies>(query, param);
+                        result.Add(res);
+                    }
+                    con.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return null;
+            }
+            result = result.OrderBy(m => m.ID).ToList();
+            return result;
+        }
+        public async Task<List<UserFavoritePeople>> ManageFavoriteActors(List<UserFavoritePeople> entity, int userID)
+        {
+            var result = new List<UserFavoritePeople>();
+            try
+            {
+                using (var con = GetConnection)
+                {
+                    foreach (var item in entity)
+                    {
+                        #region params
+                        DynamicParameters param = new DynamicParameters();
+                        param.Add("@ID", item.ID);
+                        param.Add("@UserID", userID);
+                        param.Add("@PersonID", item.PersonID);
+                        param.Add("@SortOrder", item.SortOrder);
+                        #endregion
+
+                        string query = $@"
+                        DELETE FROM UserFavoritePeopleJunction WHERE UserID = @UserID AND IsActor = 1
+                        INSERT INTO UserFavoritePeopleJunction (UserID, PersonID, SortOrder, IsActor)
+                        VALUES (@UserID, @PersonID, @SortOrder, 1)
+                        SELECT t.ID, t.PersonID, t.SortOrder, m.Name, m.Photo_URL
+                        FROM UserFavoritePeopleJunction t
+                        LEFT JOIN People m ON m.TMDB_ID = t.PersonID
+                        WHERE UserID = @UserID AND IsActor = 1
+                        ORDER BY t.SortOrder ASC";
+
+                        var res = await con.QueryFirstOrDefaultAsync<UserFavoritePeople>(query, param);
+                        result.Add(res);
+                    }
+                    con.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return null;
+            }
+            result = result.OrderBy(m => m.ID).ToList();
+            return result;
+        }
+        public async Task<List<UserFavoritePeople>> ManageFavoriteDirectors(List<UserFavoritePeople> entity, int userID)
+        {
+            var result = new List<UserFavoritePeople>();
+            try
+            {
+                using (var con = GetConnection)
+                {
+                    foreach (var item in entity)
+                    {
+                        #region params
+                        DynamicParameters param = new DynamicParameters();
+                        param.Add("@ID", item.ID);
+                        param.Add("@UserID", userID);
+                        param.Add("@PersonID", item.PersonID);
+                        param.Add("@SortOrder", item.SortOrder);
+                        #endregion
+
+                        string query = $@"
+                        DELETE FROM UserFavoritePeopleJunction WHERE UserID = @UserID AND IsActor = 0
+                        INSERT INTO UserFavoritePeopleJunction (UserID, PersonID, SortOrder, IsActor)
+                        VALUES (@UserID, @PersonID, @SortOrder, 0)
+                        SELECT t.ID, t.PersonID, t.SortOrder, m.Name, m.Photo_URL
+                        FROM UserFavoritePeopleJunction t
+                        LEFT JOIN People m ON m.TMDB_ID = t.PersonID
+                        WHERE UserID = @UserID AND IsActor = 0
+                        ORDER BY t.SortOrder ASC";
+
+                        var res = await con.QueryFirstOrDefaultAsync<UserFavoritePeople>(query, param);
                         result.Add(res);
                     }
                     con.Dispose();

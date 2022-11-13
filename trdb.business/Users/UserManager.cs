@@ -6,7 +6,7 @@ using trdb.data.Interface.User;
 using trdb.data.Repo.User;
 using trdb.entity.Helpers;
 using trdb.entity.Returns;
-using trdb.entity.UserMovies;
+using trdb.entity.Users.Settings;
 
 namespace trdb.business.Users
 {
@@ -173,6 +173,10 @@ namespace trdb.business.Users
         {
             return await _repo.ToggleDMs(userID);
         }
+        public async Task<bool> ToggleWatchlist(int userID)
+        {
+            return await _repo.ToggleWatchlist(userID);
+        }
 
         public async Task<bool> TogglePrivacy(int userID)
         {
@@ -197,6 +201,16 @@ namespace trdb.business.Users
         public async Task<List<UserFavoriteMovies>> ManageFavoriteMovies(List<UserFavoriteMovies> entity, int userID)
         {
             return await _repo.ManageFavoriteMovies(entity, userID);
+        }
+
+        public async Task<List<UserFavoritePeople>> ManageFavoriteActors(List<UserFavoritePeople> entity, int userID)
+        {
+            return await _repo.ManageFavoriteActors(entity, userID);
+        }
+
+        public async Task<List<UserFavoritePeople>> ManageFavoriteDirectors(List<UserFavoritePeople> entity, int userID)
+        {
+            return await _repo.ManageFavoriteDirectors(entity, userID);
         }
     }
 }

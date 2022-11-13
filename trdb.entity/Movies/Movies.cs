@@ -61,5 +61,8 @@ namespace trdb.entity.Movies
         [Write(false)]
         [JsonProperty("expires")]
         public DateTime WeeklyExpiryDate { get; set; }
+        [Write(false)]
+        [JsonProperty("pager")]
+        public Page? Pager { get; set; }
     }
 }

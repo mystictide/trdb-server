@@ -22,7 +22,7 @@ namespace trdb.data.Repo.Helpers
                 END
                 ELSE
                 BEGIN        
-                SELECT TOP 1 ID, TMDB_ID, Title, Backdrop_URL, Poster_URL 
+                SELECT TOP 1 ID, TMDB_ID, Title, Backdrop_URL, Poster_URL, Release_Date 
                 ,(select Date from Weekly WHERE MovieID = t.TMDB_ID) as WeeklyExpiryDate
                 FROM Movies as t WHERE t.TMDB_ID in
 	                (SELECT TOP 1 MovieID from Weekly WHERE MovieID = t.TMDB_ID ORDER BY ID DESC) ORDER BY ID DESC

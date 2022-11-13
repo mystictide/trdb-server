@@ -1,5 +1,6 @@
 ﻿using Dapper.Contrib.Extensions;
 using Newtonsoft.Json;
+using trdb.entity.Helpers;
 
 namespace trdb.entity.Movies
 {
@@ -17,7 +18,7 @@ namespace trdb.entity.Movies
         [JsonProperty("profile_path")]
         public string? Photo_URL { get; set; }
         [JsonProperty("known_for_department")]
-        public string Profession { get; set; }
+        public string? Profession { get; set; }
         [JsonProperty("gender")]
         public int Gender { get; set; }
         [JsonProperty("adult")]
@@ -35,5 +36,8 @@ namespace trdb.entity.Movies
         [Write(false)]
         [JsonProperty("order")]
         public int? ListOrder { get; set; }
+        [Write(false)]
+        [JsonProperty("pager")]
+        public Page? Pager { get; set; }
     }
 }

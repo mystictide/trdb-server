@@ -1,7 +1,7 @@
 ﻿using trdb.entity.Helpers;
 using trdb.entity.Returns;
-using trdb.entity.UserMovies;
 using trdb.entity.Users;
+using trdb.entity.Users.Settings;
 
 namespace trdb.data.Interface.User
 {
@@ -19,7 +19,10 @@ namespace trdb.data.Interface.User
         Task<SettingsReturn> UpdatePersonalSettings(SettingsReturn entity, int userID);
         Task<string> UpdateAvatar(string path, int userID);
         Task<List<UserFavoriteMovies>> ManageFavoriteMovies(List<UserFavoriteMovies> entity, int userID);
+        Task<List<UserFavoritePeople>> ManageFavoriteActors(List<UserFavoritePeople> entity, int userID);
+        Task<List<UserFavoritePeople>> ManageFavoriteDirectors(List<UserFavoritePeople> entity, int userID);
         Task<bool> ToggleDMs(int userID);
+        Task<bool> ToggleWatchlist(int userID);
         Task<bool> TogglePrivacy(int userID);
         Task<bool> ToggleAdultContent(int userID);
         Task<List<Users>>? GetFollowing(int ID);

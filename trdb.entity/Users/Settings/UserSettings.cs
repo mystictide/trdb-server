@@ -1,9 +1,7 @@
 ﻿using Dapper.Contrib.Extensions;
 using Newtonsoft.Json;
-using trdb.entity.Returns;
-using trdb.entity.UserMovies;
 
-namespace trdb.entity.Users
+namespace trdb.entity.Users.Settings
 {
     [Table("UserSettingsJunction")]
     public class UserSettings
@@ -21,12 +19,20 @@ namespace trdb.entity.Users
         public string Website { get; set; }
         [JsonProperty("dmallowed")]
         public bool IsDMAllowed { get; set; }
+        [JsonProperty("watchlist_public")]
+        public bool IsWatchlistPublic { get; set; }
         [JsonProperty("public")]
         public bool IsPublic { get; set; }
         [JsonProperty("adult")]
         public bool IsAdult { get; set; }
         [Write(false)]
         [JsonProperty("favorite_movies")]
-        public List<UserFavoriteMovies> Favourites { get; set; }
+        public List<UserFavoriteMovies> FavoriteMovies { get; set; }
+        [Write(false)]
+        [JsonProperty("favorite_actors")]
+        public List<UserFavoritePeople> FavoriteActors { get; set; }
+        [Write(false)]
+        [JsonProperty("favorite_directors")]
+        public List<UserFavoritePeople> FavoriteDirectors { get; set; }
     }
 }
