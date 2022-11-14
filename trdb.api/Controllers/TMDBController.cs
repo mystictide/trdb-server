@@ -1,9 +1,9 @@
 ﻿using RestSharp;
 using Microsoft.AspNetCore.Mvc;
 using trdb.api.Helpers;
-using trdb.business.Movies;
+using trdb.business.Films;
 using trdb.entity.Helpers;
-using trdb.entity.Movies;
+using trdb.entity.Films;
 
 namespace trdb.api.Controllers
 {
@@ -30,7 +30,7 @@ namespace trdb.api.Controllers
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var result = await new MovieGenreManager().Get(ID);
+                    var result = await new FilmGenreManager().Get(ID);
                     return Ok(result);
                 }
 
@@ -103,14 +103,14 @@ namespace trdb.api.Controllers
         }
 
         [HttpGet]
-        [Route("get/movie")]
-        public async Task<IActionResult> GetMovie([FromQuery] int ID)
+        [Route("get/film")]
+        public async Task<IActionResult> GetFilm([FromQuery] int ID)
         {
             try
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var result = await new MovieManager().Get(ID);
+                    var result = await new FilmManager().Get(ID);
                     return Ok(result);
                 }
 
@@ -162,15 +162,15 @@ namespace trdb.api.Controllers
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var filterModel = new MovieGenres();
+                    var filterModel = new FilmGenres();
                     filter.pageSize = 20;
                     filter.isDetailSearch = false;
-                    FilteredList<MovieGenres> request = new FilteredList<MovieGenres>()
+                    FilteredList<FilmGenres> request = new FilteredList<FilmGenres>()
                     {
                         filter = filter,
                         filterModel = filterModel,
                     };
-                    var result = await new MovieGenreManager().FilteredList(request);
+                    var result = await new FilmGenreManager().FilteredList(request);
                     return Ok(result);
                 }
 
@@ -267,22 +267,22 @@ namespace trdb.api.Controllers
         }
 
         [HttpGet]
-        [Route("list/movies")]
-        public async Task<IActionResult> ListMovies([FromQuery] Filter filter)
+        [Route("list/film")]
+        public async Task<IActionResult> ListFilms([FromQuery] Filter filter)
         {
             try
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var filterModel = new Movies();
+                    var filterModel = new Films();
                     filter.pageSize = 20;
                     filter.isDetailSearch = false;
-                    FilteredList<Movies> request = new FilteredList<Movies>()
+                    FilteredList<Films> request = new FilteredList<Films>()
                     {
                         filter = filter,
                         filterModel = filterModel,
                     };
-                    var result = await new MovieManager().FilteredList(request);
+                    var result = await new FilmManager().FilteredList(request);
                     return Ok(result);
                 }
 
@@ -306,13 +306,13 @@ namespace trdb.api.Controllers
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var url = "https://api.themoviedb.org/3/genre/movie/list?api_key=" + CustomHelpers.tmdb_key + "&language=en-US";
+                    var url = "https://api.themoviedb.org/3/genre/Film/list?api_key=" + CustomHelpers.tmdb_key + "&language=en-US";
                     var response = await CustomHelpers.SendRequest(url, Method.Get);
 
                     if (CustomHelpers.IsResponseSuccessful(response))
                     {
-                        var genres = MovieHelpers.FormatTMDBGenresResponse(response);
-                        var import = await new MovieGenreManager().Import(genres.List);
+                        var genres = FilmHelpers.FormatTMDBGenresResponse(response);
+                        var import = await new FilmGenreManager().Import(genres.List);
                         return Ok(import);
                     }
                 }
@@ -338,7 +338,7 @@ namespace trdb.api.Controllers
 
                     if (CustomHelpers.IsResponseSuccessful(response))
                     {
-                        var langs = MovieHelpers.FormatTMDBLanguagesResponse(response);
+                        var langs = FilmHelpers.FormatTMDBLanguagesResponse(response);
                         var import = await new LanguageManager().Import(langs);
                         return Ok(import);
                     }
@@ -365,7 +365,7 @@ namespace trdb.api.Controllers
 
                     if (CustomHelpers.IsResponseSuccessful(response))
                     {
-                        var countries = MovieHelpers.FormatTMDBCountryResponse(response);
+                        var countries = FilmHelpers.FormatTMDBCountryResponse(response);
                         var import = await new ProductionCountryManager().Import(countries);
                         return Ok(import);
                     }
@@ -380,32 +380,32 @@ namespace trdb.api.Controllers
         }
 
         [HttpPost]
-        [Route("import/movie")]
-        public async Task<IActionResult> ImportMovies([FromQuery] int? movieID)
+        [Route("import/film")]
+        public async Task<IActionResult> ImportFilms([FromQuery] int? FilmID)
         {
             try
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var import = new Movies();
-                    if (movieID == null)
+                    var import = new Films();
+                    if (FilmID == null)
                     {
-                        movieID = await new MovieManager().GetLatestMovie() + 1;
+                        FilmID = await new FilmManager().GetLatestFilm() + 1;
                     }
 
                     while (import.TMDB_ID < 1)
                     {
-                        var url = "https://api.themoviedb.org/3/movie/" + movieID + "?api_key=" + CustomHelpers.tmdb_key;
+                        var url = "https://api.themoviedb.org/3/Film/" + FilmID + "?api_key=" + CustomHelpers.tmdb_key;
                         var response = await CustomHelpers.SendRequest(url, Method.Get);
 
                         if (response != null && CustomHelpers.IsResponseSuccessful(response))
                         {
-                            var movieData = await MovieHelpers.FormatTMDBMovieResponse(response);
-                            import = await new MovieManager().Import(movieData);
+                            var FilmData = await FilmHelpers.FormatTMDBFilmResponse(response);
+                            import = await new FilmManager().Import(FilmData);
                         }
                         else
                         {
-                            movieID++;
+                            FilmID++;
                         }
                     }
                     return Ok(import);

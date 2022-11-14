@@ -198,9 +198,9 @@ namespace trdb.business.Users
             return await _repo.UpdateAvatar(path, userID);
         }
 
-        public async Task<List<UserFavoriteMovies>> ManageFavoriteMovies(List<UserFavoriteMovies> entity, int userID)
+        public async Task<List<UserFavoriteFilms>> ManageFavoriteFilms(List<UserFavoriteFilms> entity, int userID)
         {
-            return await _repo.ManageFavoriteMovies(entity, userID);
+            return await _repo.ManageFavoriteFilms(entity, userID);
         }
 
         public async Task<List<UserFavoritePeople>> ManageFavoriteActors(List<UserFavoritePeople> entity, int userID)

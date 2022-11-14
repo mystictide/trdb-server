@@ -72,14 +72,14 @@ namespace trdb.api.Controllers
         }
 
         [HttpPost]
-        [Route("favorites/movies")]
-        public async Task<IActionResult> ManageFavoriteMovies([FromBody] List<UserFavoriteMovies> entity)
+        [Route("favorites/film")]
+        public async Task<IActionResult> ManageFavoriteFilms([FromBody] List<UserFavoriteFilms> entity)
         {
             try
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var result = await new UserManager().ManageFavoriteMovies(entity, AuthHelpers.CurrentUserID(HttpContext));
+                    var result = await new UserManager().ManageFavoriteFilms(entity, AuthHelpers.CurrentUserID(HttpContext));
                     return Ok(result);
                 }
                 return StatusCode(500, "Authorization failed");

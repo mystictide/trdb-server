@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using trdb.entity.Movies;
+using trdb.entity.Films;
 
 namespace trdb.entity.Helpers
 {

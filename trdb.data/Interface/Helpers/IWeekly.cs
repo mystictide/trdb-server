@@ -2,6 +2,6 @@
 {
     public interface IWeekly
     {
-        Task<entity.Movies.Movies> Manage();
+        Task<entity.Films.Films> Manage();
     }
 }

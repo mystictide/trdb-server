@@ -2,9 +2,9 @@
 using RestSharp;
 using trdb.api.Helpers;
 using trdb.business.Helpers;
-using trdb.business.Movies;
+using trdb.business.Films;
 using trdb.entity.Helpers;
-using trdb.entity.Movies;
+using trdb.entity.Films;
 using trdb.entity.Returns;
 
 namespace trdb.api.Controllers
@@ -27,16 +27,16 @@ namespace trdb.api.Controllers
             try
             {
                 var result = new Browser();
-                var filterMovies = new Movies();
+                var filterFilms = new Films();
                 var filterPeople = new People();
                 filter.pageSize = 15;
                 filter.isDetailSearch = false;
-                FilteredList<Movies> request = new FilteredList<Movies>()
+                FilteredList<Films> request = new FilteredList<Films>()
                 {
                     filter = filter,
-                    filterModel = filterMovies,
+                    filterModel = filterFilms,
                 };
-                result.Movies = await new MovieManager().FilteredList(request);
+                result.Films = await new FilmManager().FilteredList(request);
                 FilteredList<People> requestp = new FilteredList<People>()
                 {
                     filter = filter,
@@ -54,20 +54,20 @@ namespace trdb.api.Controllers
         }
 
         [HttpGet]
-        [Route("search/movie")]
-        public async Task<IActionResult> SearchMovie([FromQuery] Filter filter)
+        [Route("search/film")]
+        public async Task<IActionResult> SearchFilm([FromQuery] Filter filter)
         {
             try
             {
-                var filterModel = new Movies();
+                var filterModel = new Films();
                 filter.pageSize = 20;
                 filter.isDetailSearch = false;
-                FilteredList<Movies> request = new FilteredList<Movies>()
+                FilteredList<Films> request = new FilteredList<Films>()
                 {
                     filter = filter,
                     filterModel = filterModel,
                 };
-                var result = await new MovieManager().FilteredList(request);
+                var result = await new FilmManager().FilteredList(request);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -142,8 +142,8 @@ namespace trdb.api.Controllers
         {
             try
             {
-                var movie = await new WeeklyManager().Manage();
-                var result = CustomHelpers.CastMovieAsWeekly(movie);
+                var Film = await new WeeklyManager().Manage();
+                var result = CustomHelpers.CastFilmAsWeekly(Film);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -163,7 +163,7 @@ namespace trdb.api.Controllers
 
                 if (CustomHelpers.IsResponseSuccessful(response))
                 {
-                    var result = await MovieHelpers.FormatTMDBSimpleMovieListResponse(response);
+                    var result = await FilmHelpers.FormatTMDBSimpleFilmListResponse(response);
                     return Ok(result.Take(6));
                 }
                 return StatusCode(500, "No items found.");
@@ -185,7 +185,7 @@ namespace trdb.api.Controllers
 
                 if (CustomHelpers.IsResponseSuccessful(response))
                 {
-                    var result = await MovieHelpers.FormatTMDBSimpleMovieListResponse(response);
+                    var result = await FilmHelpers.FormatTMDBSimpleFilmListResponse(response);
                     return Ok(result.Take(6));
                 }
                 return StatusCode(500, "No items found.");

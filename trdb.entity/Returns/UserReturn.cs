@@ -1,4 +1,7 @@
-﻿using trdb.entity.Users;
+﻿using Dapper.Contrib.Extensions;
+using Newtonsoft.Json;
+using trdb.entity.Helpers;
+using trdb.entity.Users;
 using trdb.entity.Users.Settings;
 
 namespace trdb.entity.Returns
@@ -13,5 +16,8 @@ namespace trdb.entity.Returns
         public UserFollows? Following { get; set; }
         public UserFollows? Followers { get; set; }
         public UserBlocklist? Blocked { get; set; }
+        [Write(false)]
+        [JsonProperty("pager")]
+        public Page? Pager { get; set; }
     }
 }

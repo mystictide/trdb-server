@@ -3,7 +3,7 @@ using RestSharp;
 using System.Drawing;
 using System.Drawing.Imaging;
 using trdb.api.Models;
-using trdb.entity.Movies;
+using trdb.entity.Films;
 using trdb.entity.Returns;
 using trdb.entity.Users;
 
@@ -52,13 +52,13 @@ namespace trdb.api.Helpers
             }
         }
 
-        public static WeeklyReturn CastMovieAsWeekly(Movies obj)
+        public static WeeklyReturn CastFilmAsWeekly(Films obj)
         {
             return JsonConvert.DeserializeObject<WeeklyReturn>(JsonConvert.SerializeObject(obj));
         }
-        public static List<Movies> CastObjectsAsMovies(List<object> obj)
+        public static List<Films> CastObjectsAsFilms(List<object> obj)
         {
-            return JsonConvert.DeserializeObject<List<Movies>>(JsonConvert.SerializeObject(obj));
+            return JsonConvert.DeserializeObject<List<Films>>(JsonConvert.SerializeObject(obj));
         }
 
         public static List<UserReturn> CastUsersAsUserReturns(List<Users> obj)
@@ -66,14 +66,14 @@ namespace trdb.api.Helpers
             return JsonConvert.DeserializeObject<List<UserReturn>>(JsonConvert.SerializeObject(obj));
         }
 
-        public static List<MovieReturn> CastObjectsAsSimpleMovies(List<object> obj)
+        public static List<FilmReturn> CastObjectsAsSimpleFilms(List<object> obj)
         {
-            return JsonConvert.DeserializeObject<List<MovieReturn>>(JsonConvert.SerializeObject(obj));
+            return JsonConvert.DeserializeObject<List<FilmReturn>>(JsonConvert.SerializeObject(obj));
         }
 
-        public static List<MovieReturn> CastMoviesAsSimpleMovies(List<Movies> movies)
+        public static List<FilmReturn> CastFilmsAsSimpleFilms(List<Films> Films)
         {
-            return JsonConvert.DeserializeObject<List<MovieReturn>>(JsonConvert.SerializeObject(movies));
+            return JsonConvert.DeserializeObject<List<FilmReturn>>(JsonConvert.SerializeObject(Films));
         }
 
         public static Bitmap Base64ToBitmap(IFormFile file)

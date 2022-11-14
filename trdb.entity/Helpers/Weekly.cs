@@ -7,7 +7,7 @@ namespace trdb.entity.Helpers
     {
         [Key]
         public int ID { get; set; }
-        public int MovieID { get; set; }
+        public int FilmID { get; set; }
         public DateTime Date{ get; set; }
     }
 }

@@ -11,7 +11,7 @@ namespace trdb.business.Helpers
             _repo = new WeeklyRepository();
         }
 
-        public async Task<entity.Movies.Movies> Manage()
+        public async Task<entity.Films.Films> Manage()
         {
             return await _repo.Manage();
         }

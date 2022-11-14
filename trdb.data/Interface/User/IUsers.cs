@@ -18,7 +18,7 @@ namespace trdb.data.Interface.User
         Task<bool> Block(int targetID, int userID);
         Task<SettingsReturn> UpdatePersonalSettings(SettingsReturn entity, int userID);
         Task<string> UpdateAvatar(string path, int userID);
-        Task<List<UserFavoriteMovies>> ManageFavoriteMovies(List<UserFavoriteMovies> entity, int userID);
+        Task<List<UserFavoriteFilms>> ManageFavoriteFilms(List<UserFavoriteFilms> entity, int userID);
         Task<List<UserFavoritePeople>> ManageFavoriteActors(List<UserFavoritePeople> entity, int userID);
         Task<List<UserFavoritePeople>> ManageFavoriteDirectors(List<UserFavoritePeople> entity, int userID);
         Task<bool> ToggleDMs(int userID);

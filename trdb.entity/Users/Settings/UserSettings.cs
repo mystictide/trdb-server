@@ -26,8 +26,8 @@ namespace trdb.entity.Users.Settings
         [JsonProperty("adult")]
         public bool IsAdult { get; set; }
         [Write(false)]
-        [JsonProperty("favorite_movies")]
-        public List<UserFavoriteMovies> FavoriteMovies { get; set; }
+        [JsonProperty("favorite_films")]
+        public List<UserFavoriteFilms> FavoriteFilms { get; set; }
         [Write(false)]
         [JsonProperty("favorite_actors")]
         public List<UserFavoritePeople> FavoriteActors { get; set; }
