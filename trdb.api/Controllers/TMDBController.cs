@@ -306,7 +306,7 @@ namespace trdb.api.Controllers
             {
                 if (AuthHelpers.Authorize(HttpContext, AuthorizedAuthType))
                 {
-                    var url = "https://api.themoviedb.org/3/genre/Film/list?api_key=" + CustomHelpers.tmdb_key + "&language=en-US";
+                    var url = "https://api.themoviedb.org/3/genre/movie/list?api_key=" + CustomHelpers.tmdb_key + "&language=en-US";
                     var response = await CustomHelpers.SendRequest(url, Method.Get);
 
                     if (CustomHelpers.IsResponseSuccessful(response))
@@ -395,7 +395,7 @@ namespace trdb.api.Controllers
 
                     while (import.TMDB_ID < 1)
                     {
-                        var url = "https://api.themoviedb.org/3/Film/" + FilmID + "?api_key=" + CustomHelpers.tmdb_key;
+                        var url = "https://api.themoviedb.org/3/movie/" + FilmID + "?api_key=" + CustomHelpers.tmdb_key;
                         var response = await CustomHelpers.SendRequest(url, Method.Get);
 
                         if (response != null && CustomHelpers.IsResponseSuccessful(response))

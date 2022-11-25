@@ -10,15 +10,12 @@ namespace trdb.api.Controllers
     [Route("settings")]
     public class UserSettingsController : Controller
     {
-        private readonly ILogger<UserSettingsController> _logger;
         private IWebHostEnvironment _env;
 
-        public UserSettingsController(ILogger<UserSettingsController> logger, IWebHostEnvironment env)
+        public UserSettingsController(IWebHostEnvironment env)
         {
-            _logger = logger;
             _env = env;
         }
-
         private static int AuthorizedAuthType = 1;
 
         [HttpPost]
@@ -72,7 +69,7 @@ namespace trdb.api.Controllers
         }
 
         [HttpPost]
-        [Route("favorites/film")]
+        [Route("favorites/films")]
         public async Task<IActionResult> ManageFavoriteFilms([FromBody] List<UserFavoriteFilms> entity)
         {
             try

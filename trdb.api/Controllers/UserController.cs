@@ -18,8 +18,6 @@ namespace trdb.api.Controllers
 
 
         #region interactions
-        #endregion
-
         [HttpPost]
         [Route("follow")]
         public async Task<IActionResult> FollowUser([FromBody] int targetID)
@@ -59,6 +57,7 @@ namespace trdb.api.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+        #endregion
 
         #region get 
 
@@ -114,7 +113,6 @@ namespace trdb.api.Controllers
             }
         }
 
-
         [HttpGet]
         [Route("get/blocklist")]
         public async Task<IActionResult> GetBlocklist([FromQuery] int UserID)
@@ -130,7 +128,6 @@ namespace trdb.api.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
         #endregion
     }
 }

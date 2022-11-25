@@ -154,7 +154,7 @@ namespace trdb.data.Repo.Films.Junctions
 
                         string query = $@"
                         DECLARE  @result table(ID Int, FilmID Int, PersonID Int, Character nvarchar(MAX), Department nvarchar(250), Job nvarchar(250), ListOrder Int)
-                        IF EXISTS(SELECT * from FilmCreditsJunction where FilmID = @FilmID AND PersonID = @PersonID)        
+                        IF EXISTS(SELECT * from FilmCreditsJunction where FilmID = @FilmID AND PersonID = @PersonID AND Job = @Job)        
                         BEGIN            
                         UPDATE FilmCreditsJunction
                                     SET FilmID = @FilmID, PersonID = @PersonID, Character = @Character, Department = @Department, Job = @Job, ListOrder = @ListOrder

@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using RestSharp;
+﻿using RestSharp;
 using trdb.api.Helpers;
-using trdb.business.Helpers;
-using trdb.business.Films;
-using trdb.entity.Helpers;
 using trdb.entity.Films;
+using trdb.entity.Helpers;
 using trdb.entity.Returns;
+using trdb.business.Films;
+using trdb.business.Users;
+using trdb.business.Helpers;
+using Microsoft.AspNetCore.Mvc;
 
 namespace trdb.api.Controllers
 {
@@ -29,6 +30,7 @@ namespace trdb.api.Controllers
                 var result = new Browser();
                 var filterFilms = new Films();
                 var filterPeople = new People();
+                var filterUsers = new UserReturn();
                 filter.pageSize = 15;
                 filter.isDetailSearch = false;
                 FilteredList<Films> request = new FilteredList<Films>()
@@ -44,7 +46,14 @@ namespace trdb.api.Controllers
                 };
                 result.People = await new PeopleManager().FilteredList(requestp);
                 //user lists
-                //users
+                filter.pageSize = 15;
+                filter.isDetailSearch = false;
+                FilteredList<UserReturn> requestu = new FilteredList<UserReturn>()
+                {
+                    filter = filter,
+                    filterModel = filterUsers,
+                };
+                result.Users = await new UserManager().FilteredList(requestu);
                 return Ok(result);
             }
             catch (Exception ex)

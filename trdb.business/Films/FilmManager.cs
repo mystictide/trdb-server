@@ -33,6 +33,11 @@ namespace trdb.business.Films
             return await _repo.Get(ID);
         }
 
+        public async Task<entity.Films.Films> GetFilmDetails(int? ID, string? title)
+        {
+            return await _repo.GetFilmDetails(ID, title);
+        }
+
         public async Task<IEnumerable<entity.Films.Films>> GetAll()
         {
             return await _repo.GetAll();

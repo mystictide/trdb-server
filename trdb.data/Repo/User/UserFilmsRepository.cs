@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using trdb.data.Interface.UserFilms;
-using trdb.entity.Films;
 using trdb.entity.UserFilms;
 
 namespace trdb.data.Repo.User

@@ -290,6 +290,52 @@ namespace trdb.data.Repo.User
             }
         }
 
+        public async Task<FilteredList<UserReturn>> FilteredList(FilteredList<UserReturn> request)
+        {
+            try
+            {
+                FilteredList<UserReturn> result = new FilteredList<UserReturn>();
+                DynamicParameters param = new DynamicParameters();
+                param.Add("@Keyword", request.filter.Keyword);
+                param.Add("@PageSize", request.filter.pageSize);
+
+                string WhereClause = @" WHERE (t.Username like '%' + @Keyword + '%')";
+                string query_count = $@"  Select Count(t.ID) from Users t {WhereClause}";
+
+                string query = $@"
+                SELECT *
+                FROM Users t
+                LEFT JOIN UserSettingsJunction usj ON usj.UserID = t.ID
+                {WhereClause} 
+                ORDER BY t.ID ASC 
+                OFFSET @StartIndex ROWS
+                FETCH NEXT @PageSize ROWS ONLY";
+
+                using (var con = GetConnection)
+                {
+                    result.totalItems = await con.QueryFirstOrDefaultAsync<int>(query_count, param);
+                    request.filter.pager = new Page(result.totalItems, request.filter.pageSize, request.filter.page);
+                    param.Add("@StartIndex", request.filter.pager.StartIndex);
+
+                    result.data = await con.QueryAsync<UserReturn, UserSettings, UserReturn>(query, (user, settings) =>
+                    {
+                        user.Settings = settings;
+                        return user;
+                    }, param, splitOn: "ID");
+
+                    result.filter = request.filter;
+                    result.filterModel = request.filterModel;
+                    result.filterModel.Pager = result.filter.pager;
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogsRepository.CreateLog(ex);
+                return null;
+            }
+        }
+
         public async Task<bool> Follow(int TargetID, int UserID)
         {
             DynamicParameters param = new DynamicParameters();
@@ -684,18 +730,20 @@ namespace trdb.data.Repo.User
             {
                 using (var con = GetConnection)
                 {
+                    DynamicParameters param = new DynamicParameters();
+                    param.Add("@UserID", userID);
+                    string cleanup = $@"
+                        DELETE FROM UserFavoriteFilmsJunction WHERE UserID = @UserID";
+                    await con.ExecuteAsync(cleanup, param);
                     foreach (var item in entity)
                     {
                         #region params
-                        DynamicParameters param = new DynamicParameters();
                         param.Add("@ID", item.ID);
-                        param.Add("@UserID", userID);
                         param.Add("@FilmID", item.FilmID);
                         param.Add("@SortOrder", item.SortOrder);
                         #endregion
 
                         string query = $@"
-                        DELETE FROM UserFavoriteFilmsJunction WHERE UserID = @UserID 
                         INSERT INTO UserFavoriteFilmsJunction (UserID, FilmID, SortOrder)
                         VALUES (@UserID, @FilmID, @SortOrder)
                         SELECT t.ID, t.FilmID, t.SortOrder, m.Title, m.Backdrop_URL, m.Poster_URL
@@ -725,18 +773,20 @@ namespace trdb.data.Repo.User
             {
                 using (var con = GetConnection)
                 {
+                    DynamicParameters param = new DynamicParameters();
+                    param.Add("@UserID", userID);
+                    string cleanup = $@"
+                        DELETE FROM UserFavoritePeopleJunction WHERE UserID = @UserID AND IsActor = 1";
+                    await con.ExecuteAsync(cleanup, param);
                     foreach (var item in entity)
                     {
                         #region params
-                        DynamicParameters param = new DynamicParameters();
                         param.Add("@ID", item.ID);
-                        param.Add("@UserID", userID);
                         param.Add("@PersonID", item.PersonID);
                         param.Add("@SortOrder", item.SortOrder);
                         #endregion
 
                         string query = $@"
-                        DELETE FROM UserFavoritePeopleJunction WHERE UserID = @UserID AND IsActor = 1
                         INSERT INTO UserFavoritePeopleJunction (UserID, PersonID, SortOrder, IsActor)
                         VALUES (@UserID, @PersonID, @SortOrder, 1)
                         SELECT t.ID, t.PersonID, t.SortOrder, m.Name, m.Photo_URL
@@ -766,18 +816,21 @@ namespace trdb.data.Repo.User
             {
                 using (var con = GetConnection)
                 {
+                    DynamicParameters param = new DynamicParameters();
+                    param.Add("@UserID", userID);
+                    string cleanup = $@"
+                        DELETE FROM UserFavoritePeopleJunction WHERE UserID = @UserID AND IsActor = 0";
+                    await con.ExecuteAsync(cleanup, param);
                     foreach (var item in entity)
                     {
                         #region params
-                        DynamicParameters param = new DynamicParameters();
                         param.Add("@ID", item.ID);
-                        param.Add("@UserID", userID);
                         param.Add("@PersonID", item.PersonID);
                         param.Add("@SortOrder", item.SortOrder);
                         #endregion
 
                         string query = $@"
-                        DELETE FROM UserFavoritePeopleJunction WHERE UserID = @UserID AND IsActor = 0
+ 
                         INSERT INTO UserFavoritePeopleJunction (UserID, PersonID, SortOrder, IsActor)
                         VALUES (@UserID, @PersonID, @SortOrder, 0)
                         SELECT t.ID, t.PersonID, t.SortOrder, m.Name, m.Photo_URL

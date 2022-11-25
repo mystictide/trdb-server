@@ -6,6 +6,7 @@ using trdb.data.Interface.User;
 using trdb.data.Repo.User;
 using trdb.entity.Helpers;
 using trdb.entity.Returns;
+using trdb.entity.Users;
 using trdb.entity.Users.Settings;
 
 namespace trdb.business.Users
@@ -211,6 +212,11 @@ namespace trdb.business.Users
         public async Task<List<UserFavoritePeople>> ManageFavoriteDirectors(List<UserFavoritePeople> entity, int userID)
         {
             return await _repo.ManageFavoriteDirectors(entity, userID);
+        }
+
+        public async Task<FilteredList<UserReturn>> FilteredList(FilteredList<UserReturn> request)
+        {
+            return await _repo.FilteredList(request);
         }
     }
 }

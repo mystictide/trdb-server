@@ -145,8 +145,8 @@ namespace trdb.data.Repo.Films
 
                 string query = $@"
                 SELECT *
-                ,(select Character from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.PersonID = g.TMDB_ID) as Character
-                ,(select ListOrder from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.PersonID = g.TMDB_ID) as ListOrder
+                ,(select STRING_AGG(Character, ', ') from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.PersonID = g.TMDB_ID) as Character
+                ,(select TOP 1 ListOrder from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.PersonID = g.TMDB_ID) as ListOrder
                 FROM People as g 
                 WHERE g.TMDB_ID in
                 (Select PersonID from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.Character IS NOT NULL)
@@ -173,8 +173,8 @@ namespace trdb.data.Repo.Films
 
                 string query = $@"
                 SELECT * 
-                ,(Select Department from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.PersonID = g.TMDB_ID) as Department
-                ,(Select Job from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.PersonID = g.TMDB_ID) as Job
+                ,(Select STRING_AGG(Department, ', ') from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.PersonID = g.TMDB_ID) as Department
+                ,(Select STRING_AGG(Job, ', ') from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.PersonID = g.TMDB_ID) as Job
                 FROM People as g 
                 WHERE g.TMDB_ID in
                 (Select PersonID from FilmCreditsJunction mg where mg.FilmID = @FilmID AND Character IS NULL)

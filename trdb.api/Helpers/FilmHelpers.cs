@@ -4,6 +4,7 @@ using trdb.api.Models;
 using trdb.entity.Helpers;
 using trdb.entity.Films;
 using trdb.entity.Returns;
+using System.Linq;
 
 namespace trdb.api.Helpers
 {
@@ -90,7 +91,7 @@ namespace trdb.api.Helpers
             {
                 var url = "https://api.themoviedb.org/3/movie/+" + FilmID + "/credits?api_key=" + CustomHelpers.tmdb_key + "&language=en-US";
                 var response = await CustomHelpers.SendRequest(url, Method.Get);
-                var credits = JsonConvert.DeserializeObject<Credits>(response);
+                var credits = await CreditsCleanup(JsonConvert.DeserializeObject<Credits>(response));
                 return credits;
             }
             catch (Exception)
@@ -98,5 +99,23 @@ namespace trdb.api.Helpers
                 return null;
             }
         }
+
+        public static async Task<Credits> CreditsCleanup(Credits credits)
+        {
+            try
+            {
+                //var cleanedCrew = new List<People>();
+                //cleanedCrew.AddRange(credits.Crew.Where(m => ApprovedCrewJobs.Contains(m.Job)));
+                credits.Crew = credits.Crew.Where(m => ApprovedCrewJobs.Contains(m.Job)).ToList();
+                return credits;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public static readonly List<string> ApprovedCrewJobs =
+       new List<string>() { "Director", "Executive Producer", "Producer", "Production Supervisor", "Costume Design", "Production Design", "Novel", "Writer", "Screenplay", "Editor", "Director of Photography", "Art Direction", "Assistant Art Director", "Conceptual Design", "Set Decoration", "Set Designer", "Animation Supervisor", "Visual Effects Supervisor", "Visual Effects Producer", "Visual Effects", "Original Music Composer", "Sound Effects Editor", "Sound Editor", "Sound Supervisor", "Sound Re-Recording Mixer", "Costume Supervisor", "Set Costumer", "Makeup Artist" };
     }
 }

@@ -14,6 +14,7 @@ namespace trdb.data.Interface.User
         Task<ProcessResult> Update(Users entity);
         Task<ProcessResult> Delete(int ID);
         Task<Users>? Get(int? ID, string? Username);
+        Task<FilteredList<UserReturn>> FilteredList(FilteredList<UserReturn> request);
         Task<bool> Follow(int targetID, int userID);
         Task<bool> Block(int targetID, int userID);
         Task<SettingsReturn> UpdatePersonalSettings(SettingsReturn entity, int userID);

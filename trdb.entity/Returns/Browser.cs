@@ -10,5 +10,7 @@ namespace trdb.entity.Returns
         public FilteredList<Films.Films>? Films { get; set; }
         [JsonProperty("people")]
         public FilteredList<People>? People { get; set; }
+        [JsonProperty("users")]
+        public FilteredList<UserReturn>? Users { get; set; }
     }
 }
