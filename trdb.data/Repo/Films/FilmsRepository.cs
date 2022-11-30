@@ -3,6 +3,7 @@ using Dapper;
 using trdb.data.Interface.Films;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
+using trdb.entity.Films;
 
 namespace trdb.data.Repo.Films
 {
@@ -176,72 +177,31 @@ namespace trdb.data.Repo.Films
             try
             {
                 DynamicParameters param = new DynamicParameters();
-                param.Add("@ID", ID.Value);
+                param.Add("@ID", ID ?? null);
                 param.Add("@Title", title);
 
                 string query = $@"
-                SELECT *
+                SELECT *,
+                (select * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = t.ID AND Job = 'Director') FOR JSON PATH) as Directors,
+                (select * from FilmGenres where TMDB_ID in (Select GenreID from FilmGenreJunction fgj where fgj.FilmID = t.ID) FOR JSON PATH) as Genres,
+                (select * from Languages where ID in (Select LanguageID from FilmLanguageJunction flj where flj.FilmID = t.ID) FOR JSON PATH) as Languages,
+                (select * from ProductionCompanies where TMDB_ID in (Select ProductionCompanyID from FilmProductionCompanyJunction mpc where mpc.FilmID = t.ID) FOR JSON PATH) as Companies,
+                (select * from ProductionCountries where ID in (Select ProductionCountryID from FilmProductionCountryJunction mpc where mpc.FilmID = t.ID) FOR JSON PATH) as Countries
                 FROM Films t
-                LEFT JOIN People pj on pj.TMDB_ID  in (Select PersonID from FilmCreditsJunction where FilmID = t.ID AND Job = 'Director')
                 WHERE t.TMDB_ID = @ID OR (t.Title like '%' + @Title + '%')";
-
-                // string query = $@"
-                // SELECT *
-                //,(select STRING_AGG(Name, ', ') from People p where p.TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = t.ID AND Job = 'Director')) as Director
-                // FROM Films t
-                // WHERE t.TMDB_ID = @ID OR (t.Title like '%' + @Title + '%')";
-
-                string genreQuery = $@"
-                SELECT * FROM FilmGenres as g 
-                WHERE g.TMDB_ID in
-                (Select GenreID from FilmGenreJunction mg where mg.FilmID = @FilmID)
-                ORDER BY TMDB_ID ASC";
-
-                string languageQuery = $@"
-                SELECT * FROM Languages as l
-                WHERE l.ID in 
-                (Select LanguageID from FilmLanguageJunction ml where ml.FilmID = @FilmID)
-                ORDER BY ID ASC";
-
-                string companyQuery = $@"
-                SELECT * FROM ProductionCompanies as pc 
-                WHERE pc.TMDB_ID in
-                (Select ProductionCompanyID from FilmProductionCompanyJunction mpc where mpc.FilmID = @FilmID)
-                ORDER BY TMDB_ID ASC";
-
-                string countryQuery = $@"
-                SELECT * FROM ProductionCountries as pcc 
-                WHERE pcc.ID in
-                (Select ProductionCountryID from FilmProductionCountryJunction mpc where mpc.FilmID = @FilmID)
-                ORDER BY ID ASC";
 
                 using (var con = GetConnection)
                 {
-                    var filmDictionary = new Dictionary<int, entity.Films.Films>();
-                    var res = await con.QueryAsync<entity.Films.Films, entity.Films.People, entity.Films.Films>(query, (f, p) =>
-                    {
-                        entity.Films.Films filmEntry;
-                        if (!filmDictionary.TryGetValue(f.ID, out filmEntry))
+                    var res = await con.QueryAsync<entity.Films.Films, string, string, string, string, string, entity.Films.Films>(query, (f, p, g, l, comp, cry) =>
                         {
-                            filmEntry = f;
-                            filmEntry.Directors = new List<entity.Films.People>();
-                            filmDictionary.Add(filmEntry.ID, filmEntry);
-                        }
-
-                        filmEntry.Directors.Add(p);
-                        return filmEntry;
-                    }, param, splitOn: "ID");
-                    var film = res.Distinct().ToList().FirstOrDefault();
-                    param.Add("@FilmID", film.ID);
-                    var genres = await con.QueryAsync<entity.Films.FilmGenres>(genreQuery, param);
-                    var languages = await con.QueryAsync<entity.Films.Languages>(languageQuery, param);
-                    var companies = await con.QueryAsync<entity.Films.ProductionCompanies>(companyQuery, param);
-                    var countries = await con.QueryAsync<entity.Films.ProductionCountries>(countryQuery, param);
-                    film.Genres = genres.ToList();
-                    film.Languages = languages.ToList();
-                    film.Companies = companies.ToList();
-                    film.Countries = countries.ToList();
-                    return film;
+                            f.Directors = JSONTypeHandler.Deserialize<List<People>>(p);
+                            f.Genres = JSONTypeHandler.Deserialize<List<entity.Films.FilmGenres>>(g);
+                            f.Languages = JSONTypeHandler.Deserialize<List<Languages>>(l);
+                            f.Companies = JSONTypeHandler.Deserialize<List<ProductionCompanies>>(comp);
+                            f.Countries = JSONTypeHandler.Deserialize<List<ProductionCountries>>(cry);
+                            return f;
+                        }, param, splitOn: "ID, Directors, Genres, Languages, Companies, Countries");
+                    return res.FirstOrDefault();
                 }
             }
             catch (Exception ex)

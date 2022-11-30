@@ -4,6 +4,7 @@ using trdb.data.Interface.Films;
 using trdb.data.Repo.Helpers;
 using trdb.entity.Helpers;
 using trdb.entity.Films;
+using trdb.entity.Returns;
 
 namespace trdb.data.Repo.Films
 {
@@ -164,26 +165,67 @@ namespace trdb.data.Repo.Films
                 return null;
             }
         }
-        public async Task<List<People>> GetCrew(int FilmID)
+        public async Task<CrewReturn> GetCrew(int FilmID)
         {
             try
             {
                 DynamicParameters param = new DynamicParameters();
                 param.Add("@FilmID", FilmID);
 
-                string query = $@"
-                SELECT * 
-                ,(Select STRING_AGG(Department, ', ') from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.PersonID = g.TMDB_ID) as Department
-                ,(Select STRING_AGG(Job, ', ') from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.PersonID = g.TMDB_ID) as Job
-                FROM People as g 
-                WHERE g.TMDB_ID in
-                (Select PersonID from FilmCreditsJunction mg where mg.FilmID = @FilmID AND Character IS NULL)
-                ORDER BY TMDB_ID ASC";
+                //string query = $@"
+                //SELECT * 
+                //,(Select STRING_AGG(Department, ', ') from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.PersonID = g.TMDB_ID) as Department
+                //,(Select STRING_AGG(Job, ', ') from FilmCreditsJunction mg where mg.FilmID = @FilmID AND mg.PersonID = g.TMDB_ID) as Job
+                //FROM People as g 
+                //WHERE g.TMDB_ID in
+                //(Select PersonID from FilmCreditsJunction mg where mg.FilmID = @FilmID AND Character IS NULL)
+                //ORDER BY TMDB_ID ASC";
+
+                #region queries
+
+                string Directors = $@"
+                SELECT * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = @FilmID AND Job = 'Director')";
+                string Producers = $@"
+                SELECT * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = @FilmID AND Job like '%' + 'Producer' + '%')";
+                string Writers = $@"
+                SELECT * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = @FilmID AND Job = 'Screenplay' or FilmID = @FilmID AND Job = 'Novel')";
+                string Editors = $@"
+                SELECT * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = @FilmID AND Job = 'Editor')";
+                string Photographers = $@"
+                SELECT * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = @FilmID AND Job = 'Director of Photography')";
+                string Designers = $@"
+                SELECT * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = @FilmID AND Job = 'Production Design')";
+                string Artists = $@"
+                SELECT * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = @FilmID AND Job = 'Art Direction')";
+                string Decorators = $@"
+                SELECT * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = @FilmID AND Job = 'Set Designer' or FilmID = @FilmID AND Job = 'Set Decoration')";
+                string Composers = $@"
+                SELECT * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = @FilmID AND Job = 'Original Music Composer')";
+                string Sound = $@"
+                SELECT * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = @FilmID AND Job like '%' + 'Sound' + '%')";
+                string Costumes = $@"
+                SELECT * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = @FilmID AND Job = 'Costume Design' or FilmID = @FilmID AND Job ='Costume Supervisor')";
+                string Makeup = $@"
+                SELECT * from People where TMDB_ID in (Select PersonID from FilmCreditsJunction where FilmID = @FilmID AND Job = 'Makeup Artist')";
+
+                #endregion
 
                 using (var con = GetConnection)
                 {
-                    var result = await con.QueryAsync<People>(query, param);
-                    return result.ToList();
+                    var result = new CrewReturn();
+                    result.Directors = await con.QueryAsync<People>(Directors, param);
+                    result.Producers = await con.QueryAsync<People>(Producers, param);
+                    result.Writers = await con.QueryAsync<People>(Writers, param);
+                    result.Editors = await con.QueryAsync<People>(Editors, param);
+                    result.Photographers = await con.QueryAsync<People>(Photographers, param);
+                    result.Designers = await con.QueryAsync<People>(Designers, param);
+                    result.Artists = await con.QueryAsync<People>(Artists, param);
+                    result.Decorators = await con.QueryAsync<People>(Decorators, param);
+                    result.Composers = await con.QueryAsync<People>(Composers, param);
+                    result.Sound = await con.QueryAsync<People>(Sound, param);
+                    result.Makeup = await con.QueryAsync<People>(Makeup, param);
+                    result.Costume = await con.QueryAsync<People>(Costumes, param);
+                    return result;
                 }
             }
             catch (Exception ex)

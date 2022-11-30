@@ -2,6 +2,7 @@
 using trdb.data.Repo.Films;
 using trdb.entity.Helpers;
 using trdb.entity.Films;
+using trdb.entity.Returns;
 
 namespace trdb.business.Films
 {
@@ -42,7 +43,7 @@ namespace trdb.business.Films
         {
             return await _repo.GetCast(FilmID);
         }
-        public async Task<List<People>> GetCrew(int FilmID)
+        public async Task<CrewReturn> GetCrew(int FilmID)
         {
             return await _repo.GetCrew(FilmID);
         }

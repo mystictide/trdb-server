@@ -1,8 +1,10 @@
 ﻿using trdb.data.Interface.UserFilms;
-using trdb.data.Repo.User;
+using trdb.data.Repo.UserFilms;
+using trdb.entity.Films;
+using trdb.entity.Returns;
 using trdb.entity.UserFilms;
 
-namespace trdb.business.Users
+namespace trdb.business.UserFilms
 {
     public class UserFilmManager : IUserFilms
     {
@@ -34,6 +36,11 @@ namespace trdb.business.Users
         public async Task<bool> ToggleWatchlist(int FilmID, int UserID)
         {
             return await _repo.ToggleWatchlist(FilmID, UserID);
+        }
+
+        public async Task<UserFilmReturns> GetUserFilmDetails(int ID, int UserID)
+        {
+            return await _repo.GetUserFilmDetails(ID, UserID);
         }
     }
 }

@@ -1,11 +1,66 @@
 ﻿using Dapper;
 using trdb.data.Interface.UserFilms;
+using trdb.entity.Returns;
 using trdb.entity.UserFilms;
 
-namespace trdb.data.Repo.User
+namespace trdb.data.Repo.UserFilms
 {
     public class UserFilmsRepository : Connection.dbConnection, IUserFilms
     {
+        public async Task<UserFilmReturns> GetUserFilmDetails(int ID, int UserID)
+        {
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@ID", ID);
+            param.Add("@UserID", UserID);
+
+            string Query = @"
+            SELECT 
+            (
+	             SELECT CASE WHEN EXISTS (
+                            SELECT *
+                            FROM UserWatchedFilmsJunction
+                            WHERE FilmID = @ID AND UserID = @UserID
+                        )
+                        THEN CAST(1 AS BIT)
+                        ELSE CAST(0 AS BIT) END 
+            ) as Watched,
+            (
+	             SELECT CASE WHEN EXISTS (
+                            SELECT *
+                            FROM UserWatchlistJunction
+                            WHERE FilmID = @ID AND UserID = @UserID
+                        )
+                        THEN CAST(1 AS BIT)
+                        ELSE CAST(0 AS BIT) END 
+            ) as Watchlist,
+            (
+	             SELECT CASE WHEN EXISTS (
+                            SELECT *
+                            FROM UserLikedFilmsJunction
+                            WHERE FilmID = @ID AND UserID = @UserID
+                        )
+                        THEN CAST(1 AS BIT)
+                        ELSE CAST(0 AS BIT) END 
+            ) as Liked";
+
+            string ratingQuery = @"
+            SELECT * 
+            FROM UserFilmRatingsJunction t
+            WHERE FilmID = @ID AND UserID = @UserID";
+
+            string reviewsQuery = @"
+            SELECT * 
+            FROM UserFilmReviewJunction t
+            WHERE FilmID = @ID AND UserID = @UserID";
+
+            using (var con = GetConnection)
+            {
+                var res = await con.QueryFirstOrDefaultAsync<UserFilmReturns>(Query, param);
+                res.Rating = await con.QueryFirstOrDefaultAsync<UserFilmRatings>(ratingQuery, param);
+                res.Reviews = await con.QueryAsync<UserFilmReviews>(reviewsQuery, param);
+                return res;
+            }
+        }
         public async Task<UserFilmReviews> ManageReview(UserFilmReviews entity, int UserID)
         {
             DynamicParameters param = new DynamicParameters();

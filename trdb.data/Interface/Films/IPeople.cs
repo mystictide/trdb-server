@@ -1,4 +1,5 @@
 ﻿using trdb.entity.Films;
+using trdb.entity.Returns;
 
 namespace trdb.data.Interface.Films
 {
@@ -6,6 +7,6 @@ namespace trdb.data.Interface.Films
     {
         Task<List<People>> Import(List<People> entity);
         Task<List<People>> GetCast(int FilmID);
-        Task<List<People>> GetCrew(int FilmID);
+        Task<CrewReturn> GetCrew(int FilmID);
     }
 }

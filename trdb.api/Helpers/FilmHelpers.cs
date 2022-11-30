@@ -4,7 +4,6 @@ using trdb.api.Models;
 using trdb.entity.Helpers;
 using trdb.entity.Films;
 using trdb.entity.Returns;
-using System.Linq;
 
 namespace trdb.api.Helpers
 {
@@ -104,8 +103,6 @@ namespace trdb.api.Helpers
         {
             try
             {
-                //var cleanedCrew = new List<People>();
-                //cleanedCrew.AddRange(credits.Crew.Where(m => ApprovedCrewJobs.Contains(m.Job)));
                 credits.Crew = credits.Crew.Where(m => ApprovedCrewJobs.Contains(m.Job)).ToList();
                 return credits;
             }
@@ -116,6 +113,6 @@ namespace trdb.api.Helpers
         }
 
         public static readonly List<string> ApprovedCrewJobs =
-       new List<string>() { "Director", "Executive Producer", "Producer", "Production Supervisor", "Costume Design", "Production Design", "Novel", "Writer", "Screenplay", "Editor", "Director of Photography", "Art Direction", "Assistant Art Director", "Conceptual Design", "Set Decoration", "Set Designer", "Animation Supervisor", "Visual Effects Supervisor", "Visual Effects Producer", "Visual Effects", "Original Music Composer", "Sound Effects Editor", "Sound Editor", "Sound Supervisor", "Sound Re-Recording Mixer", "Costume Supervisor", "Set Costumer", "Makeup Artist" };
+       new List<string>() { "Director", "Executive Producer", "Producer", "Production Supervisor", "Costume Design", "Production Design", "Novel", "Writer", "Screenplay", "Editor", "Director of Photography", "Art Direction", "Assistant Art Director", "Conceptual Design", "Set Decoration", "Set Designer", "Animation Supervisor", "Visual Effects Supervisor", "Visual Effects Producer", "Visual Effects", "Original Music Composer", "Sound Effects Editor", "Sound Editor", "Sound Supervisor", "Sound Re-Recording Mixer", "Sound Designer", "Sound mixer", "Costume Supervisor", "Set Costumer", "Makeup Artist" };
     }
 }
