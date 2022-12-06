@@ -3,7 +3,7 @@ using trdb.entity.UserFilms;
 
 namespace trdb.entity.Returns
 {
-    public class UserFilmReturns
+    public class UserFilmReturn
     {
         [JsonProperty("watched")]
         public bool Watched { get; set; }
@@ -12,8 +12,8 @@ namespace trdb.entity.Returns
         [JsonProperty("watchlist")]
         public bool Watchlist { get; set; }
         [JsonProperty("rating")]
-        public UserFilmRatings Rating { get; set; }
+        public UserFilmRatings? Rating { get; set; }
         [JsonProperty("reviews")]
-        public IEnumerable<UserFilmReviews> Reviews { get; set; }
+        public IEnumerable<UserFilmReviews>? Reviews { get; set; }
     }
 }

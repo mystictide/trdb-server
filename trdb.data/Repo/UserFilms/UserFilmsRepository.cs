@@ -1,13 +1,85 @@
 ﻿using Dapper;
-using trdb.data.Interface.UserFilms;
 using trdb.entity.Returns;
 using trdb.entity.UserFilms;
+using trdb.data.Interface.UserFilms;
+using trdb.entity.Films;
 
 namespace trdb.data.Repo.UserFilms
 {
     public class UserFilmsRepository : Connection.dbConnection, IUserFilms
     {
-        public async Task<UserFilmReturns> GetUserFilmDetails(int ID, int UserID)
+        public async Task<UserLogsReturn> GetUserFilmLogs(string username, string title, string year)
+        {
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@username", username);
+            param.Add("@title", title);
+            param.Add("@year", year);
+
+            string filmQuery = @"
+            SELECT *
+            FROM Films t
+            WHERE t.Title LIKE '%' + @title + '%' AND t.Release_Date LIKE '%' + @year + '%'";
+            string reviewQuery = @"
+            SELECT t.*, u.ID as UserID,
+	            (SELECT CASE WHEN EXISTS (
+                        SELECT *
+                        FROM UserLikedFilmsJunction
+                        WHERE FilmID = @FilmID AND UserID in (Select ID from Users Where ID = u.ID)
+                 ) THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END) as Liked
+            FROM UserFilmReviewJunction t
+            LEFT JOIN Users as u on Username Like '%' + @username + '%'
+            WHERE t.FilmID = @FilmID AND  t.UserID = u.ID
+            ORDER BY t.ID DESC";
+
+            using (var con = GetConnection)
+            {
+                var result = new UserLogsReturn();
+                result.Film = await con.QueryFirstOrDefaultAsync<FilmReturn>(filmQuery, param);
+                param.Add("@FilmID", result.Film.TMDB_ID);
+                result.Reviews = await con.QueryAsync<UserFilmReviews>(reviewQuery, param);
+                return result;
+            }
+        }
+        public async Task<UserReviewReturn> GetUserFilmReview(string username, string title, string year, int? count)
+        {
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@username", username);
+            param.Add("@title", title);
+            param.Add("@year", year);
+            param.Add("@ID", count);
+
+            string whereClause = @"WHERE t.FilmID = @FilmID AND t.UserID = u.ID";
+            if (count.HasValue)
+            {
+                whereClause += " AND t.ID = @ID";
+            }
+
+            string filmQuery = @"
+            SELECT *
+            FROM Films t
+            WHERE t.Title LIKE '%' + @title + '%' AND t.Release_Date LIKE '%' + @year + '%'";
+            string reviewQuery = $@"
+            SELECT TOP (1) t.*, u.ID as UserID,
+	            (SELECT CASE WHEN EXISTS (
+                        SELECT *
+                        FROM UserLikedFilmsJunction
+                        WHERE FilmID = @FilmID AND UserID in (Select ID from Users Where ID = u.ID)
+                 ) THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END) as Liked
+            FROM UserFilmReviewJunction t
+            LEFT JOIN Users as u on Username Like '%' + @username + '%'
+            {whereClause} ";
+
+            using (var con = GetConnection)
+            {
+                var result = new UserReviewReturn();
+                result.Film = await con.QueryFirstOrDefaultAsync<FilmReturn>(filmQuery, param);
+                param.Add("@FilmID", result.Film.TMDB_ID);
+                result.Review = await con.QueryFirstOrDefaultAsync<UserFilmReviews>(reviewQuery, param);
+                return result;
+            }
+        }
+
+        public async Task<UserFilmReturn> GetUserFilmDetails(int ID, int UserID)
         {
             DynamicParameters param = new DynamicParameters();
             param.Add("@ID", ID);
@@ -55,12 +127,13 @@ namespace trdb.data.Repo.UserFilms
 
             using (var con = GetConnection)
             {
-                var res = await con.QueryFirstOrDefaultAsync<UserFilmReturns>(Query, param);
+                var res = await con.QueryFirstOrDefaultAsync<UserFilmReturn>(Query, param);
                 res.Rating = await con.QueryFirstOrDefaultAsync<UserFilmRatings>(ratingQuery, param);
                 res.Reviews = await con.QueryAsync<UserFilmReviews>(reviewsQuery, param);
                 return res;
             }
         }
+
         public async Task<UserFilmReviews> ManageReview(UserFilmReviews entity, int UserID)
         {
             DynamicParameters param = new DynamicParameters();
@@ -69,29 +142,74 @@ namespace trdb.data.Repo.UserFilms
             param.Add("@FilmID", entity.FilmID);
             param.Add("@Rating", entity.Rating);
             param.Add("@Review", entity.Review);
+            param.Add("@IsRewatch", entity.IsRewatch);
             param.Add("@Date", entity.Date);
 
             string Query = @"
-            DECLARE @result table(ID Int, UserID Int, FilmID Int, Rating decimal(2,1), Review nvarchar(MAX), Date smalldatetime)
+            DECLARE @result table(ID Int, UserID Int, FilmID Int, Rating decimal(2,1), Review nvarchar(MAX), Date smalldatetime, IsRewatch bit)
             IF EXISTS(SELECT * from UserFilmReviewJunction where ID = @ID)        
             BEGIN            
                 UPDATE UserFilmReviewJunction
-                SET Rating = @Rating, Review = @Review, Date = @Date
+                SET Rating = @Rating, Review = @Review, IsRewatch = @IsRewatch
                 OUTPUT INSERTED.* INTO @result
                 WHERE ID = @ID;
             END                    
             ELSE            
             BEGIN  
-	            INSERT INTO UserFilmReviewJunction (FilmID, UserID, Rating, Review, Date)
+	            INSERT INTO UserFilmReviewJunction (FilmID, UserID, Rating, Review, Date, IsRewatch)
                 OUTPUT INSERTED.* INTO @result
-	            VALUES (@FilmID, @UserID, @Rating, @Review, @Date)
+	            VALUES (@FilmID, @UserID, @Rating, @Review, @Date, @IsRewatch)
             END
             SELECT *
 			FROM @result";
-
+            string setWatched = @"
+            IF NOT EXISTS(SELECT * from UserWatchedFilmsJunction where FilmID = @FilmID AND UserID = @UserID)        
+            BEGIN  
+	            INSERT INTO UserWatchedFilmsJunction (FilmID, UserID, Date)
+	            VALUES (@FilmID, @UserID, GETDATE())
+            END
+            SELECT CASE WHEN EXISTS (
+                SELECT *
+                FROM UserWatchedFilmsJunction
+                WHERE FilmID = @FilmID AND UserID = @UserID
+            )
+            THEN CAST(1 AS BIT)
+            ELSE CAST(0 AS BIT) END";
+            string setLike = @"
+            IF NOT EXISTS(SELECT * from UserLikedFilmsJunction where FilmID = @FilmID AND UserID = @UserID)            
+            BEGIN  
+	            INSERT INTO UserLikedFilmsJunction (FilmID, UserID, Date)
+	            VALUES (@FilmID, @UserID, GETDATE())
+            END
+            SELECT CASE WHEN EXISTS (
+                SELECT *
+                FROM UserLikedFilmsJunction
+                WHERE FilmID = @FilmID AND UserID = @UserID
+            )
+            THEN CAST(1 AS BIT)
+            ELSE CAST(0 AS BIT) END";
+            string removeLike = @"      
+	        DELETE FROM UserLikedFilmsJunction WHERE FilmID = @FilmID AND UserID = @UserID
+            SELECT CASE WHEN EXISTS (
+                SELECT *
+                FROM UserLikedFilmsJunction
+                WHERE FilmID = @FilmID AND UserID = @UserID
+            )
+            THEN CAST(1 AS BIT)
+            ELSE CAST(0 AS BIT) END";
             using (var con = GetConnection)
             {
                 var res = await con.QueryFirstOrDefaultAsync<UserFilmReviews>(Query, param);
+                res.Watched = await con.QueryFirstOrDefaultAsync<bool>(setWatched, param);
+                if (entity.Liked)
+                {
+                    res.Liked = await con.QueryFirstOrDefaultAsync<bool>(setLike, param);
+                }
+                else
+                {
+                    res.Liked = await con.QueryFirstOrDefaultAsync<bool>(removeLike, param);
+                }
+
                 return res;
             }
         }

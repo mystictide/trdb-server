@@ -29,7 +29,7 @@ namespace trdb.business.Users
                     new Claim("id", user.ID.ToString()),
                     new Claim("authType", user.AuthType.ToString())
                 }),
-                Expires = DateTime.UtcNow.AddDays(7),
+                Expires = DateTime.UtcNow.AddDays(14),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
